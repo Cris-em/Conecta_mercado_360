@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ConectaMercado 360 — Comprar Insumos</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+<style>
+  /* Variables locales para sobrescribir la paleta anterior */
+  :root {
+    --rosa-mexicano: #FF1493;
+    --morado-intenso: #4A0080;
+    --morado-claro: #F0E6F6;
+    --amarillo-vibrante: #FFC400;
+    --blanco: #ffffff;
+    --cafe-oscuro: #2e1a30;
+    --gris-texto: #6f6f6f;
+    --sombra-rosa: rgba(255, 20, 147, 0.15);
+    --sombra-morada: rgba(74, 0, 128, 0.1);
+    --transicion: 0.25s ease;
+    --font-titulo: 'Poppins', sans-serif;
+    --font-body: 'Poppins', sans-serif;
+  }
+
+  body {
+    /* CAMBIO: Fondo del Ajolote */
+    background-image: url("{{ url_for('static', filename='imagenes/fondo_axolotl.png') }}");
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+    position: relative;
+    font-family: var(--font-body);
+    color: var(--cafe-oscuro);
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* CAMBIO: Manto blanco semitransparente */
+    background: rgba(255, 255, 255, 0.85);
+    z-index: -1;
+  }
+
+  .app-layout { display: flex; min-height: 100vh; }
+
+  /* ----- SIDEBAR (Barra lateral del vendedor) ----- */
+  .sidebar {
+    width: 230px;
+    background: var(--morado-intenso); /* CAMBIO: Morado intenso */
+    backdrop-filter: blur(12px);
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    border-right: 2px solid var(--rosa-mexicano); /* CAMBIO: Borde rosa */
+  }
+  .sidebar-logo {
+    font-family: var(--font-titulo);
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #f9f7e1;
+    margin-bottom: 30px;
+    text-align: center;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    padding: 10px 14px;
+    border-radius: 40px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    transition: all var(--transicion);
+  }
+  .sidebar-item .icon { font-size: 1.2rem; }
+  .sidebar-item:hover, .sidebar-item.active {
+    background: var(--rosa-mexicano); /* CAMBIO: Hover en rosa */
+    color: white;
+    transform: translateX(4px);
+  }
+  .sidebar-item.active { box-shadow: 0 4px 12px var(--sombra-rosa); }
+
+  /* ----- CONTENIDO PRINCIPAL ----- */
+  .main-content {
+    flex: 1;
+    padding: 28px;
+    max-width: calc(100% - 230px);
+  }
+
+  .hero-compra {
+    background: linear-gradient(135deg, var(--rosa-mexicano) 0%, var(--morado-intenso) 100%); /* CAMBIO: Gradiente Rosa a Morado */
+    border-radius: 24px;
+    padding: 28px;
+    color: var(--blanco);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+  }
+  .hero-compra h2 { font-family: var(--font-titulo); font-size: 1.8rem; }
+  .hero-compra p { opacity: 0.9; margin-top: 4px; }
+  .hero-ajolote { font-size: 4rem; animation: flotar 3s ease-in-out infinite; }
+
+  @keyframes flotar {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0); }
+  }
+
+  .productos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px,1fr));
+    gap: 20px;
+    margin-bottom: 28px;
+  }
+
+  .insumo-card {
+    background: var(--blanco);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px var(--sombra-morada);
+    transition: all var(--transicion);
+    position: relative;
+    border: 1px solid transparent;
+  }
+  .insumo-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 32px var(--sombra-rosa);
+    border-color: var(--rosa-mexicano); /* CAMBIO: Borde rosa al hover */
+  }
+
+  .insumo-thumb {
+    height: 130px;
+    background: linear-gradient(135deg, var(--morado-claro), var(--rosa-mexicano)); /* CAMBIO: Gradiente morado claro a rosa */
+    display: flex; align-items: center; justify-content: center;
+    font-size: 4rem;
+    position: relative;
+  }
+  .insumo-badge {
+    position: absolute; top: 10px; right: 10px;
+    background: var(--amarillo-vibrante); /* CAMBIO: Badge amarillo */
+    color: var(--cafe-oscuro);
+    padding: 3px 10px; border-radius: 50px;
+    font-size: 0.75rem; font-weight: 800;
+  }
+
+  .insumo-body { padding: 16px; }
+  .insumo-nombre { font-weight: 800; color: var(--cafe-oscuro); margin-bottom: 4px; }
+  .insumo-proveedor { font-size: 0.8rem; color: var(--gris-texto); margin-bottom: 10px; }
+  .insumo-precio-row { display: flex; justify-content: space-between; align-items: center; }
+  .insumo-precio {
+    font-family: var(--font-titulo);
+    font-size: 1.3rem;
+    color: var(--rosa-mexicano); /* CAMBIO: Precio rosa */
+  }
+
+  .add-btn {
+    width: 36px; height: 36px;
+    background: var(--rosa-mexicano); /* CAMBIO: Fondo rosa */
+    color: var(--blanco);
+    border: none; border-radius: 50%;
+    font-size: 1.4rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all var(--transicion);
+  }
+  .add-btn:hover {
+    background: var(--amarillo-vibrante); /* CAMBIO: Amarillo al hover */
+    color: var(--cafe-oscuro);
+    transform: scale(1.15);
+  }
+
+  /* ----- CARRITO LATERAL ----- */
+  .carrito-lateral {
+    position: sticky; top: 80px;
+    background: var(--blanco);
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 4px 24px var(--sombra-morada);
+    min-width: 260px;
+    border: 1px solid var(--morado-claro);
+  }
+  .carrito-titulo {
+    font-family: var(--font-titulo);
+    color: var(--morado-intenso); /* CAMBIO: Título morado */
+    font-size: 1.2rem;
+    margin-bottom: 16px;
+  }
+  .carrito-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--morado-claro);
+  }
+  .carrito-item:last-child { border-bottom: none; }
+  .carrito-item-name { font-weight: 700; font-size: 0.9rem; color: var(--cafe-oscuro); }
+  .carrito-item-price { color: var(--rosa-mexicano); font-weight: 800; } /* CAMBIO: Precio rosa */
+
+  .carrito-total {
+    background: var(--morado-claro); /* CAMBIO: Fondo morado claro */
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+    margin: 16px 0;
+  }
+  .carrito-total-label { font-size: 0.85rem; color: var(--morado-intenso); font-weight: 700; }
+  .carrito-total-num {
+    font-family: var(--font-titulo);
+    font-size: 1.8rem;
+    color: var(--rosa-mexicano); /* CAMBIO: Número rosa */
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    border-radius: 60px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all var(--transicion);
+    font-family: var(--font-body);
+  }
+  .btn-naranja {
+    background: var(--rosa-mexicano); /* CAMBIO: Rosa mexicano */
+    color: var(--blanco);
+  }
+  .btn-naranja:hover {
+    background: var(--amarillo-vibrante); /* CAMBIO: Amarillo */
+    color: var(--cafe-oscuro);
+    transform: scale(1.02);
+  }
+  .btn-outline {
+    background: transparent;
+    border: 2px solid var(--rosa-mexicano); /* CAMBIO: Borde rosa */
+    color: var(--rosa-mexicano);
+  }
+  .btn-outline:hover {
+    background: var(--rosa-mexicano);
+    color: var(--blanco);
+  }
+
+  /* Inputs y filtros */
+  .input-field {
+    padding: 10px 16px;
+    background: var(--blanco);
+    border: 1px solid var(--morado-claro);
+    border-radius: 60px;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    outline: none;
+    transition: 0.2s;
+  }
+  .input-field:focus {
+    border-color: var(--rosa-mexicano);
+    box-shadow: 0 0 0 3px var(--sombra-rosa);
+  }
+
+  .content-with-cart { display: flex; gap: 24px; }
+  .productos-col { flex: 1; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up { animation: fadeUp 0.6s ease-out forwards; }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .content-with-cart { flex-direction: column; }
+    .carrito-lateral { position: static; min-width: auto; }
+  }
+  @media (max-width: 750px) {
+    .app-layout { flex-direction: column; }
+    .sidebar {
+      width: 100%;
+      height: auto;
+      flex-direction: row;
+      overflow-x: auto;
+      padding: 12px 16px;
+      border-right: none;
+      border-bottom: 2px solid var(--rosa-mexicano);
+    }
+    .sidebar-item { margin-bottom: 0; padding: 6px 12px; white-space: nowrap; }
+    .sidebar-logo { display: none; }
+    .main-content { max-width: 100%; padding: 16px; }
+    .productos-grid { grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); }
+  }
+</style>
+</head>
+<body>
+<div class="app-layout">
+  <!-- Barra lateral morada -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">🦎 CM360<br><small style="font-size:0.7rem;opacity:0.7;font-family:var(--font-body)">Vendedor</small></div>
+    <a href="/vendedor/inicio"           class="sidebar-item"><span class="icon">🏠</span> Mi Puesto</a>
+    <a href="/vendedor/subir-producto"   class="sidebar-item"><span class="icon">📤</span> Subir Producto</a>
+    <a href="/vendedor/stock"            class="sidebar-item"><span class="icon">📦</span> Mi Stock</a>
+    <a href="/vendedor/comprar-producto" class="sidebar-item active"><span class="icon">🛒</span> Comprar Insumos</a>
+    <a href="/vendedor/perfil"           class="sidebar-item"><span class="icon">👤</span> Mi Perfil</a>
+    <div style="flex:1"></div>
+    <a href="/" class="sidebar-item" style="border-top:1px solid rgba(255,255,255,0.15);padding-top:16px;">
+      <span class="icon">🔄</span> Cambiar Rol
+    </a>
+  </aside>
+
+  <main class="main-content">
+    <!-- Hero con gradiente Rosa a Morado -->
+    <div class="hero-compra fade-up">
+      <div>
+        <h2>🛒 Comprar Insumos</h2>
+        <p>Abastece tu puesto con los mejores productos del mercado</p>
+      </div>
+      <span class="hero-ajolote">🦎</span>
+    </div>
+
+    <div class="content-with-cart">
+      <div class="productos-col">
+        <!-- Barra de búsqueda -->
+        <div style="display:flex;gap:10px;margin-bottom:20px;" class="fade-up" style="animation-delay:0.1s">
+          <input class="input-field" style="flex:1;border-radius:50px;" placeholder="🔍 Buscar insumos...">
+          <select class="input-field" style="width:180px;border-radius:50px;">
+            <option>Todas las categorías</option>
+            <option>🥬 Verduras</option>
+            <option>🍎 Frutas</option>
+            <option>🌾 Granos</option>
+          </select>
+        </div>
+
+        <div class="productos-grid fade-up" style="animation-delay:0.2s">
+          <div class="insumo-card">
+            <div class="insumo-thumb">🍅<span class="insumo-badge">🌱 Orgánico</span></div>
+            <div class="insumo-body">
+              <div class="insumo-nombre">Caja de tomate bola</div>
+              <div class="insumo-proveedor">📍 Rancho El Milagro</div>
+              <div class="insumo-precio-row">
+                <span class="insumo-precio">$180/caja</span>
+                <button class="add-btn" onclick="agregarAlCarrito('Caja tomate', 180)">+</button>
+              </div>
+            </div>
+          </div>
+          <div class="insumo-card">
+            <div class="insumo-thumb">🌽</div>
+            <div class="insumo-body">
+              <div class="insumo-nombre">Cien elotes frescos</div>
+              <div class="insumo-proveedor">📍 Ejido San Juan</div>
+              <div class="insumo-precio-row">
+                <span class="insumo-precio">$350/cien</span>
+                <button class="add-btn" onclick="agregarAlCarrito('100 elotes', 350)">+</button>
+              </div>
+            </div>
+          </div>
+          <div class="insumo-card">
+            <div class="insumo-thumb">🥑<span class="insumo-badge">🚜 Local</span></div>
+            <div class="insumo-body">
+              <div class="insumo-nombre">Caja aguacate Hass</div>
+              <div class="insumo-proveedor">📍 Huerto Michoacán</div>
+              <div class="insumo-precio-row">
+                <span class="insumo-precio">$420/caja</span>
+                <button class="add-btn" onclick="agregarAlCarrito('Caja aguacate', 420)">+</button>
+              </div>
+            </div>
+          </div>
+          <div class="insumo-card">
+            <div class="insumo-thumb">🌶️</div>
+            <div class="insumo-body">
+              <div class="insumo-nombre">Kilo chile serrano</div>
+              <div class="insumo-proveedor">📍 Proveedor Central</div>
+              <div class="insumo-precio-row">
+                <span class="insumo-precio">$65/kg</span>
+                <button class="add-btn" onclick="agregarAlCarrito('Chile serrano 1kg', 65)">+</button>
+              </div>
+            </div>
+          </div>
+          <div class="insumo-card">
+            <div class="insumo-thumb">🫘<span class="insumo-badge">🌱 Orgánico</span></div>
+            <div class="insumo-body">
+              <div class="insumo-nombre">Frijol negro 5kg</div>
+              <div class="insumo-proveedor">📍 Bodega Oaxaca</div>
+              <div class="insumo-precio-row">
+                <span class="insumo-precio">$140/bulto</span>
+                <button class="add-btn" onclick="agregarAlCarrito('Frijol negro 5kg', 140)">+</button>
+              </div>
+            </div>
+          </div>
+          <div class="insumo-card">
+            <div class="insumo-thumb">🧅</div>
+            <div class="insumo-body">
+              <div class="insumo-nombre">Malla de cebollas</div>
+              <div class="insumo-proveedor">📍 Rancho Norte</div>
+              <div class="insumo-precio-row">
+                <span class="insumo-precio">$95/malla</span>
+                <button class="add-btn" onclick="agregarAlCarrito('Malla cebollas', 95)">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Carrito lateral -->
+      <aside class="carrito-lateral fade-up" style="animation-delay:0.3s">
+        <div class="carrito-titulo">🛒 Mi Pedido</div>
+        <div id="carritoItems">
+          <p style="color:var(--gris-texto);font-size:0.9rem;text-align:center;padding:20px 0;">Aún no has agregado productos</p>
+        </div>
+        <div class="carrito-total">
+          <div class="carrito-total-label">Total del pedido</div>
+          <div class="carrito-total-num" id="totalNum">$0.00</div>
+        </div>
+        <button class="btn btn-naranja" style="width:100%;justify-content:center;" onclick="realizarPedido()">
+          Realizar pedido 📦
+        </button>
+        <button class="btn btn-outline" style="width:100%;justify-content:center;margin-top:8px;" onclick="limpiarCarrito()">
+          Limpiar carrito
+        </button>
+      </aside>
+    </div>
+  </main>
+</div>
+
+<script>
+  let carrito = [];
+
+  function agregarAlCarrito(nombre, precio) {
+    const existente = carrito.find(i => i.nombre === nombre);
+    if (existente) existente.cantidad++;
+    else carrito.push({ nombre, precio, cantidad: 1 });
+    renderCarrito();
+  }
+
+  function renderCarrito() {
+    const contenedor = document.getElementById('carritoItems');
+    if (carrito.length === 0) {
+      contenedor.innerHTML = '<p style="color:var(--gris-texto);font-size:0.9rem;text-align:center;padding:20px 0;">Aún no has agregado productos</p>';
+      document.getElementById('totalNum').textContent = '$0.00';
+      return;
+    }
+    let total = 0;
+    contenedor.innerHTML = carrito.map(item => {
+      total += item.precio * item.cantidad;
+      return `<div class="carrito-item">
+        <div>
+          <div class="carrito-item-name">${item.nombre}</div>
+          <small style="color:var(--gris-texto)">x${item.cantidad}</small>
+        </div>
+        <span class="carrito-item-price">$${(item.precio * item.cantidad).toFixed(2)}</span>
+      </div>`;
+    }).join('');
+    document.getElementById('totalNum').textContent = `$${total.toFixed(2)}`;
+  }
+
+  function limpiarCarrito() { carrito = []; renderCarrito(); }
+  function realizarPedido() {
+    if (carrito.length === 0) return alert('Agrega productos al carrito primero');
+    alert('¡Pedido realizado con éxito! 🎉');
+    limpiarCarrito();
+  }
+</script>
+</body>
+</html>

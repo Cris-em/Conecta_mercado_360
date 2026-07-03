@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}Bienvenida - Conecta Mercado 360{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Estilos exclusivos de bienvenida (hero, tarjetas, pasos, etc.) */
+    .hero {
+        text-align: center;
+        padding: 3.5rem 1.5rem;
+        margin: 1rem 5% 0;
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(10px);
+        border-radius: 3rem;
+        border: 2px solid #FF1493; /* Borde rosa vibrante */
+        box-shadow: 0 8px 18px rgba(255, 20, 147, 0.1);
+        animation: fadeUp 0.9s ease-out;
+    }
+    .hero h1 {
+        font-size: 3rem;
+        font-weight: 800;
+        background: linear-gradient(125deg, #FF1493, #FFC400);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+    }
+    .video-help { text-align: center; margin: 1.5rem auto 0; }
+    .btn-video-glow {
+        background: linear-gradient(105deg, #FF1493, #6600CC);
+        border: none; padding: 0.8rem 2rem; border-radius: 60px; font-weight: 700;
+        color: white; display: inline-flex; align-items: center; gap: 12px;
+        cursor: pointer; box-shadow: 0 8px 18px rgba(255, 20, 147, 0.3);
+        transition: all 0.25s ease;
+    }
+    .btn-video-glow:hover { transform: scale(1.05); box-shadow: 0 12px 25px rgba(102, 0, 204, 0.4); }
+    .roles-section, .pasos-section { padding: 2.5rem 5%; }
+    .section-title {
+        text-align: center; font-size: 2rem; font-weight: 700; margin-bottom: 2rem;
+        color: #4A0080; position: relative;
+    }
+    .section-title:after { content: ''; display: block; width: 70px; height: 4px; background: #FFC400; margin: 12px auto 0; border-radius: 4px; }
+    .roles-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 2rem; }
+    .role-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 2rem; width: 300px; overflow: hidden;
+        transition: all 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        text-decoration: none; color: inherit;
+        box-shadow: 0 20px 30px -12px rgba(102, 0, 204, 0.15);
+        border: 2px solid rgba(255, 196, 0, 0.4);
+    }
+    .role-card:hover { transform: translateY(-12px) scale(1.02); box-shadow: 0 28px 38px -12px rgba(255, 20, 147, 0.3); border-color: #FF1493; }
+    .card-header { height: 180px; display: flex; align-items: center; justify-content: center; background: #4A0080; }
+    .card-header i { font-size: 5rem; color: white; filter: drop-shadow(2px 4px 8px rgba(0,0,0,0.2)); }
+    .vendedor-header { background: #FF1493; }
+    .card-content { padding: 1.6rem; text-align: center; }
+    .card-content h3 { font-size: 1.9rem; font-weight: 700; margin-bottom: 0.6rem; color: #2e1a30; }
+    .btn-role {
+        display: inline-block; background: #F0E6F6; color: #4A0080;
+        padding: 0.6rem 1.5rem; border-radius: 40px; font-weight: 600; margin-top: 1rem; transition: 0.2s;
+    }
+    .role-card:hover .btn-role { background: #FFC400; color: #2e1a30; font-weight: 700; }
+    .pasos-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 2rem; }
+    .paso-card {
+        background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(6px);
+        padding: 1.5rem; border-radius: 1.8rem; width: 220px; text-align: center;
+        transition: 0.2s; border: 1px solid #FFC400;
+    }
+    .paso-card i { font-size: 2.5rem; color: #FF1493; margin-bottom: 1rem; }
+    .features { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.5rem; padding: 1rem 5% 2.5rem; }
+    .feature {
+        background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(8px);
+        border-radius: 2rem; padding: 0.8rem 1.8rem; display: flex; align-items: center;
+        gap: 0.8rem; font-weight: 500; border: 1px solid #FF1493;
+    }
+    .feature i { font-size: 1.5rem; color: #FFC400; }
+    .back-to-top {
+        position: fixed; bottom: 100px; right: 25px; background: #4A0080;
+        width: 44px; height: 44px; border-radius: 30px; display: flex; align-items: center;
+        justify-content: center; color: white; cursor: pointer; opacity: 0;
+        visibility: hidden; transition: all 0.3s; z-index: 1999; border: 2px solid #FFC400;
+    }
+    .back-to-top.show { opacity: 1; visibility: visible; }
+    .modal {
+        display: none; position: fixed; z-index: 2100; left: 0; top: 0;
+        width: 100%; height: 100%; background-color: rgba(74, 0, 128, 0.65);
+        backdrop-filter: blur(8px); align-items: center; justify-content: center;
+    }
+    .modal-content {
+        background: #FFFFFF; border-radius: 2rem; width: 90%; max-width: 850px;
+        padding: 1rem; border: 3px solid #FF1493; animation: zoomIn 0.3s ease;
+    }
+    iframe { width: 100%; height: 450px; border-radius: 1rem; border: none; }
+    .close-modal {
+        background: #4A0080; border: none; padding: 0.6rem 1.8rem;
+        border-radius: 50px; color: white; margin-top: 1rem; cursor: pointer;
+        transition: 0.2s; border: 1px solid #FFC400;
+    }
+    .close-modal:hover { background: #FFC400; color: #2e1a30; }
+    @keyframes zoomIn { from { transform: scale(0.95); opacity: 0;} to { transform: scale(1); opacity: 1;} }
+    @media (max-width: 700px) { .hero h1 { font-size: 2rem; } .modal-content iframe { height: 280px; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Navbar de bienvenida -->
+<div class="navbar">
+    <div class="logo"><a href="#">Conecta<span style="color:#FFC400;">Mercado360</span></a></div>
+    <div class="nav-links">
+        <a href="#" id="videoHelpNavBtn"><i class="fas fa-play-circle"></i> Guía rápida</a>
+        <a href="/"><i class="fas fa-home"></i> Inicio</a>
+        <a href="/comprador/inicio"><i class="fas fa-store"></i> Tienda</a>
+        <a href="/vendedor/inicio"><i class="fas fa-chart-line"></i> Vendedor</a>
+        <a href="/comprador/mapa"><i class="fas fa-map-marker-alt"></i> Mapa</a>
+    </div>
+</div>
+
+<div class="hero">
+    <h1>Conecta Mercado 360</h1>
+    <div class="video-help" style="margin-top: 1.8rem;">
+        <button class="btn-video-glow" id="videoHelpButtonMain"><i class="fas fa-video"></i> Ver experiencia interactiva</button>
+    </div>
+</div>
+
+<div class="roles-section">
+    <div class="section-title">Comienza tu experiencia</div>
+    <div class="roles-grid">
+        <a href="/comprador/inicio" class="role-card">
+            <div class="card-header"><i class="fas fa-shopping-basket"></i></div>
+            <div class="card-content">
+                <h3>Comprador</h3>
+                <p>Descubre productores, compra local y apoya la economía de tu región.</p>
+                <span class="btn-role">Explorar <i class="fas fa-arrow-right"></i></span>
+            </div>
+        </a>
+        <a href="/vendedor/inicio" class="role-card">
+            <div class="card-header vendedor-header"><i class="fas fa-chart-line"></i></div>
+            <div class="card-content">
+                <h3>Vendedor</h3>
+                <p>Registra tus cosechas, administra tu negocio y llega a más clientes.</p>
+                <span class="btn-role">Comenzar <i class="fas fa-arrow-right"></i></span>
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="pasos-section">
+    <div class="section-title">¿Cómo funciona?</div>
+    <div class="pasos-grid">
+        <div class="paso-card"><i class="fas fa-user-plus"></i><h4>1. Regístrate</h4><p>Elige ser comprador o vendedor</p></div>
+        <div class="paso-card"><i class="fas fa-map-marked-alt"></i><h4>2. Explora</h4><p>Descubre productos o sube tus ofertas</p></div>
+        <div class="paso-card"><i class="fas fa-hand-holding-heart"></i><h4>3. Conecta</h4><p>Realiza pedidos y apoya lo local</p></div>
+    </div>
+</div>
+
+<div class="features">
+    <div class="feature"><i class="fas fa-leaf"></i> 100% fresco</div>
+    <div class="feature"><i class="fas fa-truck-fast"></i> Envíos a domicilio</div>
+    <div class="feature"><i class="fas fa-chalkboard-user"></i> Capacitación para vendedores</div>
+    <div class="feature"><i class="fas fa-hand-holding-usd"></i> Sin comisiones abusivas</div>
+</div>
+
+
+<!-- Modal de video -->
+<div id="videoModal" class="modal">
+    <div class="modal-content">
+        <iframe id="videoFrame" src="https://www.youtube.com/embed/Lt3IOdEr4P8?si=YxS9PkA2CYTpmUZo" title="Video tutorial" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        <div><button class="close-modal" id="closeVideoModal">Cerrar guía</button></div>
+    </div>
+</div>
+
+<div class="back-to-top" id="backToTopBtn"><i class="fas fa-arrow-up"></i></div>
+
+<script>
+    (function() {
+        // Modal video
+        const modal = document.getElementById('videoModal');
+        const closeModalBtn = document.getElementById('closeVideoModal');
+        const mainVideoBtn = document.getElementById('videoHelpButtonMain');
+        const navVideoBtn = document.getElementById('videoHelpNavBtn');
+        const iframeVideo = document.getElementById('videoFrame');
+
+        function openModal(e) { if(e) e.preventDefault(); if(modal) { modal.style.display = 'flex'; document.body.style.overflow = 'hidden'; } }
+        function closeModal() { if(modal) { modal.style.display = 'none'; document.body.style.overflow = ''; if(iframeVideo) iframeVideo.src = iframeVideo.src; } }
+        if(mainVideoBtn) mainVideoBtn.addEventListener('click', openModal);
+        if(navVideoBtn) navVideoBtn.addEventListener('click', openModal);
+        if(closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+        window.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+        // Back to top
+        const backBtn = document.getElementById('backToTopBtn');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 500 && backBtn) backBtn.classList.add('show');
+            else if (backBtn) backBtn.classList.remove('show');
+        });
+        if (backBtn) backBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+        // Animaciones fade-in para tarjetas
+        const fadeElements = document.querySelectorAll('.role-card, .paso-card, .feature');
+        const fadeObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                    fadeObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+        fadeElements.forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            fadeObserver.observe(el);
+        });
+    })();
+</script>
+{% endblock %}

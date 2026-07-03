@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>MiApp - Entrada Principal</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Fuente moderna (opcional) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- PANTALLA DE CARGA INICIAL -->
+    <div id="splash-screen" class="splash">
+        <div class="splash-content">
+            <div class="logo-app">
+                🚀
+            </div>
+            <h1>MiApp</h1>
+            <div class="loader"></div>
+            <p>Cargando recursos...</p>
+        </div>
+    </div>
+
+    <!-- CONTENEDOR PRINCIPAL (oculto hasta terminar carga) -->
+    <div id="app-container" class="app-container hidden">
+        <header class="app-header">
+            <div class="logo">✨ MiApp</div>
+            <button id="menu-toggle" class="menu-toggle" aria-label="Menú">☰</button>
+        </header>
+
+        <!-- Menú de navegación (links a todas las páginas) -->
+        <nav id="main-menu" class="main-menu hidden-menu">
+            <ul>
+                <li><a href="#" data-page="dashboard">📊 Dashboard</a></li>
+                <li><a href="#" data-page="perfil">👤 Mi Perfil</a></li>
+                <li><a href="#" data-page="configuracion">⚙️ Configuración</a></li>
+                <li><a href="#" data-page="contacto">📞 Contacto</a></li>
+                <li><a href="#" data-page="acerca">ℹ️ Acerca de</a></li>
+            </ul>
+        </nav>
+
+        <!-- Área dinámica donde se cargarán las páginas -->
+        <main id="page-content" class="page-content">
+            <div class="welcome-card">
+                <h2>Bienvenido a MiApp</h2>
+                <p>Selecciona una opción del menú para comenzar.</p>
+                <button id="quick-dashboard" class="btn-primary">Ir al Dashboard</button>
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            <p>© 2025 MiApp - Todos los derechos reservados</p>
+        </footer>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

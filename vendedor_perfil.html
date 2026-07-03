@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil de Vendedor - Conecta Mercado 360</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background-image: url("{{ url_for('static', filename='imagenes/fondo_axolotl.png') }}"); background-size: cover; background-attachment: fixed; background-position: center; position: relative; }
+        body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.85); z-index: -1; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 5%; background: rgba(86, 0, 158, 0.96); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 1000; border-bottom: 3px solid #FF1493; }
+        .logo a { font-size: 1.6rem; font-weight: 800; color: #f9f7e1; text-decoration: none; }
+        .logo span { color: #FFC400; }
+        .nav-links a { color: #ffffff; text-decoration: none; margin-left: 1.8rem; font-weight: 500; transition: 0.3s; }
+        .nav-links a:hover { color: #FFC400; }
+        .nav-links i { margin-right: 0.4rem; }
+        .container { max-width: 1000px; margin: 2rem auto; padding: 0 5%; }
+        .page-title { font-size: 2rem; font-weight: 600; margin-bottom: 1.5rem; color: #4A0080; border-left: 6px solid #FF1493; padding-left: 1rem; }
+        .profile-card { background: white; border-radius: 1.5rem; padding: 2rem; box-shadow: 0 20px 35px rgba(86, 0, 158, 0.1); border: 1px solid #F0E6F6; }
+        .avatar-section { text-align: center; margin-bottom: 1.5rem; }
+        .avatar-preview { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #FF1493; background: #F0E6F6; display: inline-flex; align-items: center; justify-content: center; font-size: 4rem; color: #FF1493; }
+        .avatar-section input[type="file"] { display: none; }
+        .avatar-label { display: inline-block; margin-top: 0.5rem; background: #F0E6F6; padding: 0.4rem 1rem; border-radius: 30px; cursor: pointer; font-size: 0.8rem; font-weight: 500; color: #4A0080; transition: 0.2s; }
+        .avatar-label:hover { background: #FF1493; color: white; }
+        .form-group { margin-bottom: 1.2rem; }
+        label { display: block; font-weight: 600; margin-bottom: 0.4rem; color: #4A0080; }
+        input, select, textarea { width: 100%; padding: 0.8rem 1rem; border: 1px solid #FF1493; border-radius: 50px; font-family: 'Poppins', sans-serif; background: #fefef7; transition: 0.2s; }
+        textarea { border-radius: 1rem; resize: vertical; }
+        input:disabled, select:disabled, textarea:disabled { background: #f1f5f9; color: #333; border: 1px solid #e2e8f0; cursor: not-allowed; opacity: 0.9; }
+        input:focus, select:focus, textarea:focus { outline: none; box-shadow: 0 0 0 3px rgba(255, 20, 147, 0.2); border-color: #FF1493; }
+        
+        .btn-save { background: #FF1493; color: white; border: none; padding: 0.8rem 1.8rem; border-radius: 60px; font-weight: 600; cursor: pointer; transition: 0.2s; width: 100%; font-size: 1rem; }
+        .btn-save:hover { background: #FFC400; color: #2e1a30; transform: scale(1.02); }
+        
+        .btn-outline { background: transparent; border: 2px solid #4A0080; color: #4A0080; padding: 0.8rem 1.8rem; border-radius: 60px; font-weight: 600; cursor: pointer; transition: 0.2s; width: 100%; font-size: 1rem; }
+        .btn-outline:hover { background: #4A0080; color: white; transform: scale(1.02); }
+
+        .flash-message { background: #ffffff; color: #4A0080; border: 2px solid #FF1493; padding: 0.8rem; border-radius: 40px; margin-bottom: 1rem; text-align: center; font-weight: 500; }
+        @media (max-width: 800px) { .navbar { flex-direction: column; gap: 0.5rem; } }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo"><a href="/vendedor/inicio">Conecta<span>Mercado360</span></a></div>
+        <div class="nav-links">
+            <a href="/vendedor/inicio"><i class="fas fa-tachometer-alt"></i> Inicio</a>
+            <a href="/vendedor/subir"><i class="fas fa-upload"></i> Subir producto</a>
+            <a href="/vendedor/stock"><i class="fas fa-boxes"></i> Stock</a>
+            <a href="/vendedor/ventas"><i class="fas fa-chart-line"></i> Ventas</a>
+            <a href="/vendedor/perfil"><i class="fas fa-user-circle"></i> Mi perfil</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1 class="page-title"><i class="fas fa-store"></i> Perfil de vendedor</h1>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <div class="profile-card">
+            <form method="POST" enctype="multipart/form-data" id="profileForm">
+                <input type="hidden" name="user_id" id="userId">
+
+                <div class="avatar-section">
+                    <div id="avatarPreview" class="avatar-preview">
+                        <i class="fas fa-tractor"></i>
+                    </div>
+                    <label for="profile_photo" class="avatar-label"><i class="fas fa-camera"></i> Cambiar logo/foto</label>
+                    <input type="file" name="profile_photo" id="profile_photo" accept="image/*" onchange="previewImage(event)">
+                </div>
+                
+                <div class="form-group">
+                    <label>Tu nombre completo</label>
+                    <input type="text" name="fullName" id="fullName" placeholder="Ej. Juan Pérez" required disabled>
+                </div>
+                <div class="form-group">
+                    <label>Correo electrónico</label>
+                    <input type="email" name="email" id="email" placeholder="correo@ejemplo.com" required disabled>
+                </div>
+
+                <div class="form-group">
+                    <label>Nombre del negocio / Tienda</label>
+                    <input type="text" name="businessName" id="businessName" placeholder="Ej. Frutería Doña Mary" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Descripción del negocio</label>
+                    <textarea rows="3" name="businessDesc" id="businessDesc" placeholder="Describe tus productos, origen, prácticas agrícolas..." disabled></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Teléfono / WhatsApp</label>
+                    <input type="tel" name="sellerPhone" id="sellerPhone" placeholder="55 1234 5678" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Ubicación del mercado / punto de venta</label>
+                    <input type="text" name="sellerLocation" id="sellerLocation" value="Mercado Melchor Ocampo, frente Cecytem Chimalhuacán 1" disabled>
+                </div>
+
+                <!-- BOTONES DE ACCIÓN -->
+                <button type="button" id="editBtn" class="btn-outline"><i class="fas fa-pen"></i> Editar datos</button>
+                <button type="submit" id="saveBtn" class="btn-save" style="display: none;"><i class="fas fa-save"></i> Guardar cambios</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function previewImage(event) {
+            const reader = new FileReader();
+            reader.onload = function() {
+                const preview = document.getElementById('avatarPreview');
+                preview.innerHTML = `<img src="${reader.result}" style="width:120px; height:120px; border-radius:50%; object-fit:cover;">`;
+            }
+            if (event.target.files[0]) { reader.readAsDataURL(event.target.files[0]); }
+        }
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            const userId = localStorage.getItem('userId');
+            if (!userId) {
+                alert("⚠️ No has iniciado sesión. Serás redirigido al inicio.");
+                window.location.href = '/';
+                return;
+            }
+            document.getElementById('userId').value = userId;
+
+            try {
+                const res = await fetch(`/api/perfil_vendedor?user_id=${userId}`);
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+
+                // ✅ Asignación segura de datos
+                document.getElementById('fullName').value = data.nombre ? data.nombre : '';
+                document.getElementById('email').value = data.email ? data.email : '';
+                document.getElementById('businessName').value = data.nombre_negocio ? data.nombre_negocio : '';
+                document.getElementById('businessDesc').value = data.descripcion ? data.descripcion : '';
+                document.getElementById('sellerLocation').value = data.ubicacion ? data.ubicacion : '';
+                document.getElementById('sellerPhone').value = data.telefono ? data.telefono : '';
+
+                if (data.foto_perfil) {
+                    const preview = document.getElementById('avatarPreview');
+                    preview.innerHTML = `<img src="${data.foto_perfil}" style="width:120px; height:120px; border-radius:50%; object-fit:cover;">`;
+                }
+            } catch (e) {
+                console.error("Error cargando perfil:", e);
+            }
+        });
+
+        // Lógica para activar edición
+        document.getElementById('editBtn').addEventListener('click', function() {
+            // Habilitar inputs
+            document.querySelectorAll('#profileForm input, #profileForm select, #profileForm textarea').forEach(el => el.disabled = false);
+            // Ocultar botón de editar y mostrar guardar
+            this.style.display = 'none';
+            document.getElementById('saveBtn').style.display = 'block';
+        });
+    </script>
+</body>
+</html>

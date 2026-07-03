@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subir Producto - Conecta Mercado 360</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background-image: url("{{ url_for('static', filename='imagenes/fondo_axolotl.png') }}"); background-size: cover; background-attachment: fixed; background-position: center; position: relative; }
+        body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.85); z-index: -1; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 5%; background: rgba(86, 0, 158, 0.96); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 1000; border-bottom: 3px solid #FF1493; }
+        .logo a { font-size: 1.6rem; font-weight: 800; color: #f9f7e1; text-decoration: none; }
+        .logo span { color: #FFC400; }
+        .nav-links a { color: #ffffff; text-decoration: none; margin-left: 1.8rem; font-weight: 500; transition: 0.3s; }
+        .nav-links a:hover { color: #FFC400; }
+        .nav-links i { margin-right: 0.4rem; }
+        .container { max-width: 900px; margin: 2rem auto; padding: 0 5%; }
+        .page-title { font-size: 2rem; font-weight: 600; margin-bottom: 1.5rem; color: #4A0080; border-left: 6px solid #FF1493; padding-left: 1rem; }
+        .form-card { background: white; border-radius: 1.5rem; padding: 2rem; box-shadow: 0 20px 35px rgba(86, 0, 158, 0.1); border: 1px solid #F0E6F6; }
+        .form-group { margin-bottom: 1.5rem; }
+        label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: #4A0080; }
+        label i { margin-right: 0.4rem; color: #FF1493; }
+        input, select, textarea { width: 100%; padding: 0.8rem 1rem; border: 1px solid #FF1493; border-radius: 50px; font-family: 'Poppins', sans-serif; background: #fefef7; transition: 0.2s; }
+        textarea { border-radius: 1rem; resize: vertical; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #FF1493; box-shadow: 0 0 0 3px rgba(255,20,147,0.2); }
+        .image-preview { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 0.5rem; align-items: center; }
+        .preview-img { width: 100px; height: 100px; object-fit: cover; border-radius: 1rem; border: 2px solid #FF1493; }
+        .file-label { background: #F0E6F6; padding: 0.6rem 1.2rem; border-radius: 60px; cursor: pointer; display: inline-block; font-weight: 500; color: #4A0080; transition: 0.2s; }
+        .file-label:hover { background: #FF1493; color: white; }
+        input[type="file"] { display: none; }
+        .row-2cols { display: flex; gap: 1rem; }
+        .row-2cols .form-group { flex: 1; }
+        .btn-submit { background: #FF1493; color: white; border: none; padding: 0.9rem 1.8rem; border-radius: 60px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: 0.2s; width: 100%; }
+        .btn-submit:hover { background: #FFC400; color: #2e1a30; transform: scale(1.02); }
+        @media (max-width: 800px) { .navbar { flex-direction: column; gap: 0.5rem; } .row-2cols { flex-direction: column; gap: 0; } }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo"><a href="/vendedor/inicio">Conecta<span>Mercado360</span></a></div>
+        <div class="nav-links">
+            <a href="/vendedor/inicio"><i class="fas fa-tachometer-alt"></i> Inicio</a>
+            <a href="/vendedor/subir"><i class="fas fa-upload"></i> Subir producto</a>
+            <a href="/vendedor/stock"><i class="fas fa-boxes"></i> Stock</a>
+            <a href="/vendedor/ventas"><i class="fas fa-chart-line"></i> Ventas</a>
+            <a href="/vendedor/perfil"><i class="fas fa-user-circle"></i> Mi perfil</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1 class="page-title"><i class="fas fa-cloud-upload-alt"></i> Subir nuevo producto</h1>
+        <div class="form-card">
+            <form method="POST" enctype="multipart/form-data" id="productForm">
+                <input type="hidden" name="user_id" id="formUserId">
+                <div class="form-group">
+                    <label><i class="fas fa-tag"></i> Nombre del producto *</label>
+                    <input type="text" name="nombre" placeholder="Ej. Manzana Fuji" required>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-align-left"></i> Descripción</label>
+                    <textarea rows="3" name="descripcion" placeholder="Describe tu producto..."></textarea>
+                </div>
+                <div class="row-2cols">
+                    <div class="form-group">
+                        <label><i class="fas fa-list"></i> Categoría *</label>
+                        <select name="categoria" required>
+                            <option value="">Selecciona</option>
+                            <option>Frutas</option>
+                            <option>Verduras</option>
+                            <option>Lácteos</option>
+                            <option>Carnes</option>
+                            <option>Granos y semillas</option>
+                            <option>Productos procesados</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-dollar-sign"></i> Precio (MXN) *</label>
+                        <input type="number" name="precio" step="0.01" placeholder="Ej. 45.00" required>
+                    </div>
+                </div>
+                <div class="row-2cols">
+                    <div class="form-group">
+                        <label><i class="fas fa-boxes"></i> Cantidad Inicial (Stock) *</label>
+                        <input type="number" name="stock" step="0.1" placeholder="Ej. 50" required>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-box"></i> Unidad</label>
+                        <select name="unidad">
+                            <option value="kg">Kilogramos (kg)</option>
+                            <option value="g">Gramos (g)</option>
+                            <option value="pza">Piezas</option>
+                            <option value="L">Litros</option>
+                            <option value="ml">Mililitros</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-image"></i> Imagen del producto *</label>
+                    <input type="file" name="imagen" id="imagenInput" accept="image/*" required>
+                    <div class="image-preview" id="imagePreview"></div>
+                    <small class="file-label" onclick="document.getElementById('imagenInput').click()">📁 Seleccionar imagen</small>
+                </div>
+                <div class="form-group">
+                    <label><i class="fab fa-youtube"></i> Video opcional</label>
+                    <input type="url" name="video_url" placeholder="https://youtube.com/...">
+                </div>
+                <button type="submit" class="btn-submit"><i class="fas fa-save"></i> Guardar producto</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const userId = localStorage.getItem('userId');
+            if (userId) {
+                document.getElementById('formUserId').value = userId;
+            } else {
+                alert("Error: No se encontró el ID de usuario. Por favor, inicia sesión nuevamente.");
+                window.location.href = '/';
+            }
+        });
+        const imagenInput = document.getElementById('imagenInput');
+        const previewDiv = document.getElementById('imagePreview');
+        imagenInput.addEventListener('change', function(event) {
+            previewDiv.innerHTML = '';
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.classList.add('preview-img');
+                    previewDiv.appendChild(img);
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+</body>
+</html>

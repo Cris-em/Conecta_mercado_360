@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConectaMercado 360 — Mi Stock</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <style>
+        :root { --rosa-mexicano: #FF1493; --morado-intenso: #4A0080; --morado-claro: #F0E6F6; --amarillo-vibrante: #FFC400; --blanco: #ffffff; --cafe-oscuro: #2e1a30; --gris-texto: #6f6f6f; --sombra-rosa: rgba(255, 20, 147, 0.15); --sombra-morada: rgba(74, 0, 128, 0.1); --transicion: 0.25s ease; --font-titulo: 'Poppins', sans-serif; --font-body: 'Poppins', sans-serif; }
+        
+        body { background-image: url("/static/imagenes/fondo_axolotl.png"); background-size: cover; background-attachment: fixed; background-position: center; position: relative; font-family: 'Poppins', sans-serif; }
+        body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.85); z-index: -1; }
+        .app-layout { display: flex; min-height: 100vh; }
+        
+        .sidebar { width: 230px; background: var(--morado-intenso); backdrop-filter: blur(12px); padding: 24px 16px; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; border-right: 2px solid var(--rosa-mexicano); }
+        .sidebar-logo { font-family: 'Poppins'; font-size: 1.4rem; font-weight: 800; color: #f9f7e1; text-align: center; margin-bottom: 30px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.15); }
+        .sidebar-item { display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,0.8); text-decoration: none; padding: 10px 14px; border-radius: 40px; font-weight: 500; margin-bottom: 8px; transition: all var(--transicion); }
+        .sidebar-item:hover, .sidebar-item.active { background: var(--rosa-mexicano); color: white; transform: translateX(4px); }
+        .sidebar-item i { font-size: 1.2rem; }
+
+        .main-content { flex: 1; padding: 28px; max-width: calc(100% - 230px); }
+        .page-title { font-size: 2rem; font-weight: 600; margin-bottom: 0.25rem; color: var(--morado-intenso); }
+        .page-subtitle { color: var(--gris-texto); margin-bottom: 1rem; }
+
+        .header-action { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+        .btn-rosa { background: var(--rosa-mexicano); color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 60px; font-weight: 600; transition: 0.2s; text-decoration: none; }
+        .btn-rosa:hover { background: var(--amarillo-vibrante); color: var(--cafe-oscuro); transform: scale(1.02); }
+
+        .search-input { width: 100%; padding: 10px 18px; border: 2px solid var(--rosa-mexicano); border-radius: 50px; font-family: var(--font-body); font-size: 0.95rem; outline: none; background: var(--blanco); margin-bottom: 24px; }
+
+        .card-tabla { background: var(--blanco); border-radius: 20px; padding: 0; overflow: hidden; box-shadow: 0 4px 16px var(--sombra-morada); }
+        .stock-table { width: 100%; border-collapse: collapse; }
+        .stock-table thead th { background: var(--morado-intenso); color: var(--blanco); padding: 14px 16px; text-align: left; font-family: var(--font-titulo); font-size: 0.95rem; }
+        .stock-table tbody tr { border-bottom: 1px solid var(--morado-claro); transition: background 0.2s; }
+        .stock-table tbody tr:hover { background: var(--morado-claro); }
+        .stock-table td { padding: 14px 16px; vertical-align: middle; }
+        .prod-cell { display: flex; align-items: center; gap: 12px; }
+        .prod-img-cell { width: 40px; height: 40px; border-radius: 8px; overflow: hidden; background: #f5f5f5; display:flex; align-items:center; justify-content:center; }
+        .prod-img-cell img { width: 100%; height: 100%; object-fit: cover; }
+        .prod-cell-name { font-weight: 800; color: var(--cafe-oscuro); }
+        .prod-cell-cat { font-size: 0.8rem; color: var(--gris-texto); }
+        .stock-bar-wrap { width: 120px; }
+        .stock-bar-bg { background: #e0e0e0; border-radius: 10px; height: 8px; overflow: hidden; }
+        .stock-bar-fill { height: 100%; border-radius: 10px; transition: width 0.5s; }
+        .bar-verde { background: var(--rosa-mexicano); }
+        .bar-amarillo { background: var(--amarillo-vibrante); }
+        .bar-rojo { background: var(--morado-intenso); }
+        .stock-num { font-weight: 800; font-size: 0.9rem; }
+        .estado-pill { padding: 4px 12px; border-radius: 50px; font-size: 0.8rem; font-weight: 700; }
+        .estado-activo { background: var(--morado-claro); color: var(--morado-intenso); }
+        .estado-bajo { background: #FFF3CD; color: #856404; }
+        .estado-agotado { background: #FFE0D4; color: #721C24; }
+        .action-cell { display: flex; gap: 8px; }
+        .icon-btn { width: 34px; height: 34px; border-radius: 8px; border: none; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .icon-btn-edit { background: var(--morado-claro); color: var(--morado-intenso); }
+        .icon-btn-edit:hover { background: var(--morado-intenso); color: var(--blanco); }
+        .icon-btn-del { background: #FFE0D4; color: var(--rosa-mexicano); }
+        .icon-btn-del:hover { background: var(--rosa-mexicano); color: var(--blanco); }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 2rem; border-radius: 2rem; width: 90%; max-width: 450px; border-top: 8px solid var(--rosa-mexicano); position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        .modal-close { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; cursor: pointer; color: #888; transition: 0.2s; }
+        .modal-close:hover { color: var(--rosa-mexicano); }
+        .modal-title { text-align: center; color: var(--morado-intenso); margin-bottom: 1.5rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-label { display: block; font-weight: 600; color: var(--morado-intenso); margin-bottom: 0.3rem; }
+        .form-input { width: 100%; padding: 0.7rem; border: 2px solid var(--morado-claro); border-radius: 40px; font-family: 'Poppins'; transition: 0.2s; }
+        .form-input:focus { border-color: var(--rosa-mexicano); outline: none; }
+
+        @media (max-width: 750px) { .app-layout { flex-direction: column; } .sidebar { width: 100%; height: auto; flex-direction: row; overflow-x: auto; border-right: none; border-bottom: 2px solid var(--rosa-mexicano); } .sidebar-logo { display: none; } .main-content { max-width: 100%; padding: 16px; } }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">🦎 CM360<br><small style="font-size:0.7rem;">Vendedor</small></div>
+    <a href="/vendedor/inicio" class="sidebar-item"><i class="fas fa-home"></i> Mi Puesto</a>
+    <a href="/vendedor/subir-producto" class="sidebar-item"><i class="fas fa-upload"></i> Subir Producto</a>
+    <a href="/vendedor/stock" class="sidebar-item active"><i class="fas fa-boxes"></i> Mi Stock</a>
+    <a href="/vendedor/ventas" class="sidebar-item"><i class="fas fa-chart-line"></i> Mis Ventas</a>
+    <a href="/vendedor/perfil" class="sidebar-item"><i class="fas fa-user-circle"></i> Mi Perfil</a>
+    <div style="flex:1"></div>
+    <a href="/" class="sidebar-item" style="border-top:1px solid rgba(255,255,255,0.15);padding-top:16px;"><i class="fas fa-exchange-alt"></i> Cambiar Rol</a>
+  </aside>
+
+  <main class="main-content">
+    <div class="header-action">
+      <div>
+        <div class="page-title">📦 Mi Stock de Productos</div>
+        <div class="page-subtitle">Gestiona tu inventario en tiempo real</div>
+      </div>
+      <a href="/vendedor/subir-producto" class="btn-rosa">➕ Nuevo Producto</a>
+    </div>
+
+    <!-- Barra de búsqueda -->
+    <input class="search-input" id="searchInput" placeholder="🔍 Buscar producto...">
+
+    <div class="card-tabla">
+      <table class="stock-table" id="stockTable">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Tipo</th>
+            <th>Precio</th>
+            <th>Stock</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="stockTableBody"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- Modal de Edición -->
+<div id="editModal" class="modal-overlay">
+  <div class="modal-content">
+    <span class="modal-close" onclick="cerrarModal()">&times;</span>
+    <h3 class="modal-title">✏️ Editar Producto</h3>
+    <form id="editForm">
+      <input type="hidden" id="editId">
+      <div class="form-group">
+        <label class="form-label">Nombre del producto</label>
+        <input type="text" class="form-input" id="editNombre" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Precio (MXN)</label>
+        <input type="number" step="0.01" class="form-input" id="editPrecio" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stock (Cantidad)</label>
+        <input type="number" step="0.1" class="form-input" id="editStock" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Unidad (ej: kg, pza, L)</label>
+        <input type="text" class="form-input" id="editUnidad" placeholder="kg" required>
+      </div>
+      <button type="submit" class="btn-rosa" style="width:100%; border:none; padding:0.8rem; margin-top:10px;">Guardar Cambios</button>
+    </form>
+  </div>
+</div>
+
+<script>
+    let allProducts = [];
+    const userId = localStorage.getItem('userId');
+
+    async function cargarStock() {
+        if (!userId) return alert("Debes iniciar sesión como vendedor.");
+        try {
+            const res = await fetch(`/api/vendedor/stock_data?user_id=${userId}`);
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+            allProducts = data.productos || [];
+            renderizarTabla(allProducts);
+        } catch (e) {
+            console.error("Error:", e);
+            document.getElementById('stockTableBody').innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem;">⚠️ No se pudieron cargar los productos.</td></tr>`;
+        }
+    }
+
+    function renderizarTabla(productos) {
+        const tbody = document.getElementById('stockTableBody');
+        if (!productos || productos.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--gris-texto);">Aún no tienes productos registrados en este local.</td></tr>`;
+            return;
+        }
+
+        let html = '';
+        productos.forEach(p => {
+            const stock = parseFloat(p.stock) || 0;
+            const unidad = p.unidad || 'kg';
+            const precio = parseFloat(p.precio) || 0;
+            
+            let estadoClass = 'estado-activo';
+            let estadoText = '✅ Activo';
+            let barClass = 'bar-verde';
+            let stockColor = 'var(--rosa-mexicano)';
+            
+            if (stock <= 0) {
+                estadoClass = 'estado-agotado';
+                estadoText = '❌ Agotado';
+                barClass = 'bar-rojo';
+                stockColor = 'var(--morado-intenso)';
+            } else if (stock <= 5) {
+                estadoClass = 'estado-bajo';
+                estadoText = '⚠️ Stock bajo';
+                barClass = 'bar-amarillo';
+                stockColor = '#856404';
+            }
+
+            const imgSrc = p.imagen_url && p.imagen_url.trim() !== '' 
+                ? p.imagen_url 
+                : 'https://via.placeholder.com/40x40?text=Sin+Img';
+
+            const maxBar = 100;
+            let porcentaje = (stock / 10) * 100;
+            if (porcentaje > 100) porcentaje = 100;
+
+            html += `
+            <tr>
+                <td>
+                    <div class="prod-cell">
+                        <div class="prod-img-cell">
+                            <img src="${imgSrc}" alt="${p.nombre}" loading="lazy">
+                        </div>
+                        <div>
+                            <div class="prod-cell-name">${p.nombre}</div>
+                            <div class="prod-cell-cat">${p.categoria || ''}</div>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="tag" style="background:var(--morado-claro); color:var(--morado-intenso); padding:2px 10px; border-radius:12px; font-size:0.75rem;">🖼️ Imagen</span></td>
+                <td style="font-family:var(--font-titulo); color:var(--rosa-mexicano);">$${precio.toFixed(2)}/${unidad}</td>
+                <td>
+                    <div class="stock-bar-wrap">
+                        <div class="stock-bar-bg"><div class="stock-bar-fill ${barClass}" style="width:${porcentaje}%"></div></div>
+                        <small class="stock-num" style="color:${stockColor}">${stock} ${unidad}</small>
+                    </div>
+                </td>
+                <td><span class="estado-pill ${estadoClass}">${estadoText}</span></td>
+                <td>
+                    <div class="action-cell">
+                        <button class="icon-btn icon-btn-edit" onclick="abrirModalEditar(${p.id})">✏️</button>
+                        <button class="icon-btn icon-btn-del" onclick="eliminarProducto(${p.id})">🗑️</button>
+                    </div>
+                </td>
+            </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    }
+
+    document.getElementById('searchInput').addEventListener('input', function() {
+        const term = this.value.toLowerCase().trim();
+        if (term === '') {
+            renderizarTabla(allProducts);
+            return;
+        }
+        const filtered = allProducts.filter(p => p.nombre.toLowerCase().includes(term));
+        renderizarTabla(filtered);
+    });
+
+    const editModal = document.getElementById('editModal');
+    function abrirModalEditar(id) {
+        const prod = allProducts.find(p => p.id === id);
+        if (!prod) return;
+        document.getElementById('editId').value = prod.id;
+        document.getElementById('editNombre').value = prod.nombre;
+        document.getElementById('editPrecio').value = prod.precio;
+        document.getElementById('editStock').value = prod.stock || 0;
+        document.getElementById('editUnidad').value = prod.unidad || 'kg';
+        editModal.style.display = 'flex';
+    }
+
+    function cerrarModal() { editModal.style.display = 'none'; }
+
+    document.getElementById('editForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const id = document.getElementById('editId').value;
+        const datos = {
+            nombre: document.getElementById('editNombre').value,
+            precio: document.getElementById('editPrecio').value,
+            stock: document.getElementById('editStock').value,
+            unidad: document.getElementById('editUnidad').value
+        };
+        try {
+            const res = await fetch(`/api/productos/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) });
+            const json = await res.json();
+            if (json.success) { alert('✅ Producto actualizado'); cerrarModal(); cargarStock(); } 
+            else alert('Error: ' + json.error);
+        } catch (e) { alert('Error de conexión.'); }
+    });
+
+    async function eliminarProducto(id) {
+        if (!confirm("¿Estás seguro de que quieres eliminar este producto?")) return;
+        try {
+            const res = await fetch(`/api/productos/${id}`, { method: 'DELETE' });
+            const json = await res.json();
+            if (json.success) { alert('🗑️ Producto eliminado'); cargarStock(); } 
+            else alert('Error: ' + json.error);
+        } catch (e) { alert('Error de conexión.'); }
+    }
+
+    cargarStock();
+</script>
+</body>
+</html>

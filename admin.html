@@ -1,0 +1,808 @@
+<!-- ============================================================================
+ARCHIVO: admin.html
+DESCRIPCIÓN: Panel de administración principal. Permite visualizar, buscar,
+editar y eliminar usuarios, productos, locales y ventas a través de una interfaz
+de pestañas y modales de edición.
+============================================================================ -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <!-- Configuración básica de la página -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Conecta Mercado 360</title>
+
+    <!-- Importación de fuentes y librerías externas -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <!-- =========================================================
+    ESTILOS CSS PROPIOS DE LA PÁGINA
+    ========================================================= -->
+    <style>
+        /* Estilos de reset globales para eliminar márgenes y bordes por defecto */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Estilos generales del cuerpo de la página */
+        body {
+            font-family: 'Poppins', sans-serif;
+            /* Carga la imagen de fondo del ajolote */
+            background-image: url("{{ url_for('static', filename='imagenes/fondo_axolotl.png') }}");
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+            color: #2e1a30;
+            position: relative;
+        }
+
+        /* Capa de fondo blanco semitransparente para mejorar la legibilidad del texto */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            z-index: -1;
+        }
+
+        /* Barra de navegación superior */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 5%;
+            background: rgba(86, 0, 158, 0.96);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 3px solid #FF1493;
+            box-shadow: 0 4px 20px rgba(86, 0, 158, 0.2);
+        }
+
+        .logo a {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #f9f7e1;
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: #FFC400;
+        }
+
+        .nav-links a {
+            color: #ffffff;
+            text-decoration: none;
+            margin-left: 1.8rem;
+            font-weight: 500;
+            transition: 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #FFC400;
+        }
+
+        .nav-links i {
+            margin-right: 0.4rem;
+        }
+
+        /* Contenedor principal y encabezado */
+        .container {
+            max-width: 1300px;
+            margin: 2rem auto;
+            padding: 0 5%;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .admin-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #4A0080;
+            border-left: 6px solid #FF1493;
+            padding-left: 1rem;
+        }
+
+        /* Contenedor de los botones de pestañas (Tabs) */
+        .tab-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .tab-btn {
+            background: #F0E6F6;
+            color: #4A0080;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .tab-btn:hover,
+        .tab-btn.active {
+            background: #4A0080;
+            color: white;
+        }
+
+        /* Tarjeta principal que contiene la tabla y la búsqueda */
+        .admin-card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 10px 20px rgba(86, 0, 158, 0.1);
+        }
+
+        /* Contenedor de la barra de búsqueda */
+        .search-wrapper {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .search-input-admin {
+            width: 100%;
+            max-width: 350px;
+            padding: 0.5rem 1rem;
+            border: 2px solid #F0E6F6;
+            border-radius: 50px;
+            font-family: 'Poppins', sans-serif;
+            transition: 0.2s;
+            outline: none;
+        }
+
+        .search-input-admin:focus {
+            border-color: #FF1493;
+        }
+
+        .search-input-admin::placeholder {
+            color: #aaa;
+        }
+
+        /* Envoltura de la tabla para permitir scroll horizontal si es necesario */
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        /* Estilos de la tabla de datos */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background: #4A0080;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .data-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .data-table tr:hover {
+            background: #f9f9f9;
+        }
+
+        /* Botones de acción (Editar y Eliminar) */
+        .btn-action {
+            border: none;
+            padding: 6px 12px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.85rem;
+        }
+
+        .btn-edit {
+            background: #FFC400;
+            color: #2e1a30;
+        }
+
+        .btn-edit:hover {
+            background: #FF1493;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .btn-delete {
+            background: #FFE0D4;
+            color: #721C24;
+            margin-left: 5px;
+        }
+
+        .btn-delete:hover {
+            background: #c0392b;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        /* Estilos del modal de edición (fondo oscuro y contenido centrado) */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 2rem;
+            width: 90%;
+            max-width: 450px;
+            border-top: 8px solid #FF1493;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #888;
+            transition: 0.2s;
+        }
+
+        .modal-close:hover {
+            color: #FF1493;
+        }
+
+        .modal-title {
+            text-align: center;
+            color: #4A0080;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #4A0080;
+            margin-bottom: 0.3rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.7rem;
+            border: 2px solid #F0E6F6;
+            border-radius: 40px;
+            font-family: 'Poppins';
+            transition: 0.2s;
+        }
+
+        .form-input:focus {
+            border-color: #FF1493;
+            outline: none;
+        }
+
+        .btn-modal-submit {
+            width: 100%;
+            background: #FF1493;
+            color: white;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 60px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-modal-submit:hover {
+            background: #FFC400;
+            color: #2e1a30;
+        }
+
+        /* Pie de página */
+        footer {
+            background: #2a004a;
+            color: #FF1493;
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: 3rem;
+            border-top: 3px solid #FFC400;
+        }
+
+        /* Estilos responsivos para pantallas pequeñas */
+        @media (max-width: 800px) {
+            .navbar {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- =========================================================
+    BARRA DE NAVEGACIÓN DEL ADMIN
+    ========================================================= -->
+    <div class="navbar">
+        <div class="logo"><a href="/admin">Conecta<span>Mercado360</span> - Admin</a></div>
+        <div class="nav-links">
+            <a href="/"><i class="fas fa-home"></i> Salir al inicio</a>
+        </div>
+    </div>
+
+    <!-- =========================================================
+    CONTENEDOR PRINCIPAL
+    ========================================================= -->
+    <div class="container">
+
+        <!-- Encabezado con título y botón de cerrar sesión -->
+        <div class="admin-header">
+            <h1 class="admin-title"><i class="fas fa-crown"></i> Panel de Administración</h1>
+            <button onclick="cerrarSesionAdmin()" style="background:#FF1493; color:white; border:none; padding:0.5rem 1.5rem; border-radius:40px; font-weight:600; cursor:pointer;">Cerrar Sesión</button>
+        </div>
+
+        <!-- Pestañas de navegación entre secciones -->
+        <div class="tab-buttons">
+            <button class="tab-btn active" onclick="cargarSeccion('usuarios')"><i class="fas fa-users"></i> Usuarios</button>
+            <button class="tab-btn" onclick="cargarSeccion('productos')"><i class="fas fa-box"></i> Productos</button>
+            <button class="tab-btn" onclick="cargarSeccion('locales')"><i class="fas fa-store"></i> Locales</button>
+            <button class="tab-btn" onclick="cargarSeccion('ventas')"><i class="fas fa-chart-line"></i> Ventas</button>
+        </div>
+
+        <!-- Contenedor dinámico donde se renderizarán las tablas -->
+        <div id="dataContainer" class="admin-card">
+            <p style="text-align:center; padding:2rem; color:#999;">Selecciona una categoría para cargar los datos.</p>
+        </div>
+    </div>
+
+    <!-- =========================================================
+    MODALES DE EDICIÓN
+    ========================================================= -->
+
+    <!-- Modal para editar Usuario -->
+    <div id="editUserModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="modal-close" onclick="cerrarModal('editUserModal')">&times;</span>
+            <h3 class="modal-title">Editar Usuario</h3>
+            <form id="editUserForm">
+                <input type="hidden" id="editUserId">
+                <div class="form-group">
+                    <label class="form-label">Nombre</label>
+                    <input type="text" class="form-input" id="editUserName">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="editUserEmail">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Rol</label>
+                    <select class="form-input" id="editUserRol">
+                        <option value="comprador">Comprador</option>
+                        <option value="vendedor">Vendedor</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-modal-submit">Guardar Cambios</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para editar Producto -->
+    <div id="editProductModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="modal-close" onclick="cerrarModal('editProductModal')">&times;</span>
+            <h3 class="modal-title">Editar Producto</h3>
+            <form id="editProductForm">
+                <input type="hidden" id="editProductId">
+                <div class="form-group">
+                    <label class="form-label">Nombre</label>
+                    <input type="text" class="form-input" id="editProdName">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Precio (MXN)</label>
+                    <input type="number" step="0.01" class="form-input" id="editProdPrice">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Stock</label>
+                    <input type="number" step="0.1" class="form-input" id="editProdStock">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Unidad</label>
+                    <input type="text" class="form-input" id="editProdUnidad" placeholder="kg, pza, L">
+                </div>
+                <button type="submit" class="btn-modal-submit">Guardar Cambios</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para editar Local -->
+    <div id="editLocalModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="modal-close" onclick="cerrarModal('editLocalModal')">&times;</span>
+            <h3 class="modal-title">Editar Local</h3>
+            <form id="editLocalForm">
+                <input type="hidden" id="editLocalId">
+                <div class="form-group">
+                    <label class="form-label">Nombre</label>
+                    <input type="text" class="form-input" id="editLocalName">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Descripción</label>
+                    <input type="text" class="form-input" id="editLocalDesc">
+                </div>
+                <button type="submit" class="btn-modal-submit">Guardar Cambios</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- =========================================================
+    PIE DE PÁGINA
+    ========================================================= -->
+    <footer>
+        <p>© 2026 Conecta Mercado 360 - Panel de Administración</p>
+    </footer>
+
+    <!-- =========================================================
+    LÓGICA DE NEGOCIO (JAVASCRIPT)
+    ========================================================= -->
+    <script>
+        // Variable global para almacenar los datos ya cargados y evitar múltiples peticiones
+        let cachedData = {};
+
+        // Obtenemos el ID del admin desde el LocalStorage (guardado al iniciar sesión)
+        const adminId = localStorage.getItem('userId');
+
+        /*
+         * Función principal para cargar una sección específica desde la API.
+         * Parámetros: seccion -> Nombre de la sección (usuarios, productos, locales, ventas)
+         */
+        async function cargarSeccion(seccion) {
+            // Actualizar el estado visual de las pestañas
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+
+            const container = document.getElementById('dataContainer');
+            container.innerHTML = '<p style="text-align:center; padding:2rem; color:#999;">Cargando datos...</p>';
+
+            try {
+                const res = await fetch(`/api/admin/${seccion}`);
+                const data = await res.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // Guardamos los datos en la memoria caché del navegador
+                cachedData[seccion] = data;
+                renderizarTablaAdmin(seccion, data);
+
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = `<p style="text-align:center; padding:2rem; color:red;">Error al cargar los datos.</p>`;
+            }
+        }
+
+        /*
+         * Función para renderizar dinámicamente la tabla y la barra de búsqueda.
+         * Parámetros:
+         *   seccion -> Nombre de la sección.
+         *   datos   -> Array de objetos con los registros a mostrar.
+         */
+        function renderizarTablaAdmin(seccion, datos) {
+            const container = document.getElementById('dataContainer');
+
+            if (datos.length === 0) {
+                container.innerHTML = `<p style="text-align:center; padding:2rem; color:#999;">No hay registros en ${seccion}.</p>`;
+                return;
+            }
+
+            // Construcción de la barra de búsqueda y el inicio de la tabla
+            let html = `
+                <div class="search-wrapper">
+                    <input type="text" id="search-${seccion}" class="search-input-admin" placeholder="Buscar...">
+                </div>
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead><tr>
+            `;
+
+            // Generación dinámica de los encabezados de columna
+            const keys = Object.keys(datos[0]);
+            keys.forEach(key => {
+                html += `<th>${key.replace(/_/g, ' ').toUpperCase()}</th>`;
+            });
+
+            // Si la sección no es "ventas", se añade una columna extra para los botones de acción
+            if (seccion !== 'ventas') {
+                html += '<th>Acciones</th>';
+            }
+            html += `</tr></thead><tbody id="tbody-${seccion}">`;
+
+            // Generación dinámica de las filas de datos
+            datos.forEach(row => {
+                html += `<tr>`;
+                keys.forEach(key => {
+                    html += `<td>${row[key] || '-'}</td>`;
+                });
+
+                // Agregar botones de Editar y Eliminar si no es la sección de ventas
+                if (seccion !== 'ventas') {
+                    const id = row.id || row.pedido_id; // Se obtiene el ID único del registro
+                    html += `
+                        <td>
+                            <button class="btn-action btn-edit" onclick="abrirEditModal('${seccion}', ${id})">Editar</button>
+                            <button class="btn-action btn-delete" onclick="eliminarRegistro('${seccion}', ${id})">Eliminar</button>
+                        </td>
+                    `;
+                }
+                html += `</tr>`;
+            });
+
+            html += `</tbody></table></div>`;
+            container.innerHTML = html;
+
+            // Asignar el evento de búsqueda en tiempo real al input
+            const inputBusqueda = document.getElementById(`search-${seccion}`);
+            if (inputBusqueda) {
+                inputBusqueda.onkeyup = function() {
+                    filtrarTabla(seccion);
+                };
+            }
+        }
+
+        /*
+         * Función para filtrar la tabla en tiempo real basándose en el texto ingresado.
+         * Busca en todas las columnas del registro.
+         * Parámetros: seccion -> Nombre de la sección.
+         */
+        function filtrarTabla(seccion) {
+            const busqueda = document.getElementById(`search-${seccion}`).value.toLowerCase();
+            const datosOriginales = cachedData[seccion];
+
+            if (!datosOriginales) return;
+
+            // Filtrar los objetos cuyos valores concatenados contengan el texto de búsqueda
+            const datosFiltrados = datosOriginales.filter(row => {
+                return Object.values(row).join(' ').toLowerCase().includes(busqueda);
+            });
+
+            const tbody = document.getElementById(`tbody-${seccion}`);
+            if (!tbody) return;
+
+            // Limpiar el cuerpo de la tabla y volver a llenarlo
+            tbody.innerHTML = '';
+
+            if (datosFiltrados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:#999; padding:1rem;">No se encontraron resultados.</td></tr>`;
+                return;
+            }
+
+            const keys = Object.keys(datosFiltrados[0]);
+
+            datosFiltrados.forEach(row => {
+                let tr = document.createElement('tr');
+                keys.forEach(key => {
+                    let td = document.createElement('td');
+                    td.innerText = row[key] || '-';
+                    tr.appendChild(td);
+                });
+
+                // Si no es ventas, agregar botones de acción a la fila filtrada
+                if (seccion !== 'ventas') {
+                    let tdAcc = document.createElement('td');
+                    const id = row.id || row.pedido_id;
+                    tdAcc.innerHTML = `
+                        <button class="btn-action btn-edit" onclick="abrirEditModal('${seccion}', ${id})">Editar</button>
+                        <button class="btn-action btn-delete" onclick="eliminarRegistro('${seccion}', ${id})">Eliminar</button>
+                    `;
+                    tr.appendChild(tdAcc);
+                }
+                tbody.appendChild(tr);
+            });
+        }
+
+        /*
+         * Funciones de utilidad para mostrar y ocultar los modales.
+         * Parámetros: id -> Identificador único del elemento HTML del modal.
+         */
+        function cerrarModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        function abrirModal(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+
+        /*
+         * Función para abrir el modal correspondiente y rellenar el formulario con los datos
+         * del registro seleccionado.
+         * Parámetros:
+         *   seccion -> Nombre de la sección (usuarios, productos, locales).
+         *   id      -> ID del registro a editar.
+         */
+        function abrirEditModal(seccion, id) {
+            const data = cachedData[seccion].find(item => item.id === id);
+            if (!data) return alert("No se encontró el registro.");
+
+            if (seccion === 'usuarios') {
+                document.getElementById('editUserId').value = data.id;
+                document.getElementById('editUserName').value = data.nombre;
+                document.getElementById('editUserEmail').value = data.email;
+                document.getElementById('editUserRol').value = data.rol;
+                abrirModal('editUserModal');
+            } else if (seccion === 'productos') {
+                document.getElementById('editProductId').value = data.id;
+                document.getElementById('editProdName').value = data.nombre;
+                document.getElementById('editProdPrice').value = data.precio;
+                document.getElementById('editProdStock').value = data.stock || 0;
+                document.getElementById('editProdUnidad').value = data.unidad || 'kg';
+                abrirModal('editProductModal');
+            } else if (seccion === 'locales') {
+                document.getElementById('editLocalId').value = data.id;
+                document.getElementById('editLocalName').value = data.nombre;
+                document.getElementById('editLocalDesc').value = data.descripcion || '';
+                abrirModal('editLocalModal');
+            }
+        }
+
+        // =========================================================
+        // EVENTOS DE ENVÍO DE FORMULARIOS (MODALES DE EDICIÓN)
+        // =========================================================
+
+        // Envío del formulario de edición de usuario
+        document.getElementById('editUserForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('editUserId').value;
+            const datos = {
+                nombre: document.getElementById('editUserName').value,
+                email: document.getElementById('editUserEmail').value,
+                rol: document.getElementById('editUserRol').value
+            };
+
+            try {
+                const res = await fetch(`/api/admin/usuarios/${id}?admin_id=${adminId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datos)
+                });
+                const json = await res.json();
+                if (json.success) {
+                    alert('Usuario actualizado.');
+                    cerrarModal('editUserModal');
+                    cargarSeccion('usuarios');
+                } else {
+                    alert('Error: ' + json.error);
+                }
+            } catch (e) {
+                alert('Error de conexión.');
+            }
+        });
+
+        // Envío del formulario de edición de producto
+        document.getElementById('editProductForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('editProductId').value;
+            const datos = {
+                nombre: document.getElementById('editProdName').value,
+                precio: document.getElementById('editProdPrice').value,
+                stock: document.getElementById('editProdStock').value,
+                unidad: document.getElementById('editProdUnidad').value
+            };
+
+            try {
+                const res = await fetch(`/api/admin/productos/${id}?admin_id=${adminId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datos)
+                });
+                const json = await res.json();
+                if (json.success) {
+                    alert('Producto actualizado.');
+                    cerrarModal('editProductModal');
+                    cargarSeccion('productos');
+                } else {
+                    alert('Error: ' + json.error);
+                }
+            } catch (e) {
+                alert('Error de conexión.');
+            }
+        });
+
+        // Envío del formulario de edición de local
+        document.getElementById('editLocalForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('editLocalId').value;
+            const datos = {
+                nombre: document.getElementById('editLocalName').value,
+                descripcion: document.getElementById('editLocalDesc').value
+            };
+
+            try {
+                const res = await fetch(`/api/admin/locales/${id}?admin_id=${adminId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datos)
+                });
+                const json = await res.json();
+                if (json.success) {
+                    alert('Local actualizado.');
+                    cerrarModal('editLocalModal');
+                    cargarSeccion('locales');
+                } else {
+                    alert('Error: ' + json.error);
+                }
+            } catch (e) {
+                alert('Error de conexión.');
+            }
+        });
+
+        /*
+         * Función para eliminar un registro permanentemente después de confirmar.
+         * Parámetros:
+         *   seccion -> Nombre de la sección (usuarios, productos, locales).
+         *   id      -> ID del registro a eliminar.
+         */
+        async function eliminarRegistro(seccion, id) {
+            if (!confirm("¿Estás seguro de que quieres eliminar este registro permanentemente?")) return;
+
+            try {
+                const res = await fetch(`/api/admin/${seccion}/${id}?admin_id=${adminId}`, {
+                    method: 'DELETE'
+                });
+                const json = await res.json();
+                if (json.success) {
+                    alert('Eliminado exitosamente.');
+                    cargarSeccion(seccion);
+                } else {
+                    alert('Error: ' + json.error);
+                }
+            } catch (e) {
+                alert('Error de conexión.');
+            }
+        }
+
+        /*
+         * Función para cerrar la sesión del administrador.
+         * Elimina los datos de LocalStorage y redirige a la página de inicio pública.
+         */
+        function cerrarSesionAdmin() {
+            localStorage.clear();
+            window.location.href = '/';
+        }
+
+        // Cargar automáticamente la sección de usuarios al abrir el panel
+        cargarSeccion('usuarios');
+    </script>
+</body>
+</html>

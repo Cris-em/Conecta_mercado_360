@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio - Conecta Mercado 360{% endblock %}
+
+{% block extra_css %}
+<style>
+    body::before { background: rgba(86, 0, 158, 0.4); }
+    .login-card {
+        background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border-radius: 2.5rem;
+        padding: 3rem; max-width: 600px; width: 90%; text-align: center;
+        box-shadow: 0 25px 45px rgba(0,0,0,0.2); border: 2px solid rgba(255, 20, 147, 0.3);
+        animation: slideUp 0.8s ease-out; margin: 3rem auto; position: relative;
+    }
+    .login-title {
+        font-size: 2.5rem; font-weight: 800;
+        background: linear-gradient(135deg, #FF1493, #FFC400);
+        background-clip: text;
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        margin-bottom: 2.5rem;
+    }
+    .btn-group { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem; }
+    .btn-main {
+        display: flex; align-items: center; justify-content: center; gap: 1rem;
+        width: 100%; padding: 1rem; border-radius: 60px; font-weight: 600;
+        font-size: 1.1rem; border: none; cursor: pointer; transition: all 0.3s ease; color: white;
+    }
+    .btn-guest { background: #6c757d; }
+    .btn-guest:hover { background: #5a6268; transform: scale(1.02); }
+    .btn-register { background: #FF1493; }
+    .btn-register:hover { background: #FFC400; color: #2e1a30; transform: scale(1.02); }
+    .btn-login {
+        background: transparent; border: 2px solid #4A0080; color: #4A0080;
+    }
+    .btn-login:hover { background: #4A0080; color: white; transform: scale(1.02); }
+    
+    .btn-admin {
+        background: #2a004a; border: 2px solid #FFC400; color: white;
+    }
+    .btn-admin:hover { background: #FFC400; color: #2e1a30; transform: scale(1.02); }
+
+    .footer-logos { display: flex; justify-content: center; align-items: center; gap: 2rem; margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(0,0,0,0.1); }
+    .footer-logos img { height: 45px; width: auto; object-fit: contain; }
+
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center; }
+    .modal-content { background: white; padding: 2rem; border-radius: 2rem; width: 90%; max-width: 450px; border-top: 8px solid #FF1493; }
+    .modal-close { float: right; cursor: pointer; font-size: 1.5rem; color: #888; }
+    .modal-close:hover { color: #FF1493; }
+    .form-group { margin-bottom: 1.2rem; }
+    label { display: block; font-weight: 600; color: #4A0080; margin-bottom: 0.3rem; }
+    input, select { width: 100%; padding: 0.7rem 1rem; border: 2px solid #F0E6F6; border-radius: 50px; font-family: 'Poppins', sans-serif; }
+    input:focus { border-color: #FF1493; outline: none; }
+    .btn-submit { width: 100%; background: #FF1493; color: white; border: none; padding: 0.8rem; border-radius: 60px; font-weight: 600; margin-top: 1rem; cursor: pointer; }
+    .btn-submit:hover { background: #FFC400; color: #2e1a30; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(50px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 600px) { .login-card { padding: 2rem; width: 95%; } .footer-logos { flex-direction: column; gap: 1rem; } }
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="login-card">
+        <div class="login-title">Conecta Mercado 360</div>
+        <div class="btn-group">
+            <button class="btn-main btn-guest" onclick="window.location.href='/invitado'">
+                <i class="fas fa-user-secret"></i> Iniciar sesión como invitado
+            </button>
+            <button class="btn-main btn-register" onclick="window.location.href='/registro'">
+                <i class="fas fa-user-plus"></i> Crear una cuenta o registrarse
+            </button>
+            <button class="btn-main btn-login" onclick="abrirModal('login')">
+                <i class="fas fa-sign-in-alt"></i> Iniciar sesión para entrar a la cuenta
+            </button>
+            <button class="btn-main btn-admin" onclick="abrirModal('admin')">
+                <i class="fas fa-user-shield"></i> Acceso Administrador
+            </button>
+        </div>
+        <div class="footer-logos">
+            <img src="{{ url_for('static', filename='imagenes/logoaycir.png') }}" alt="AYCIR">
+            <img src="{{ url_for('static', filename='imagenes/logocecytem.png') }}" alt="CECYTEM">
+        </div>
+    </div>
+
+    <!-- MODAL DE INICIO DE SESIÓN / ADMIN -->
+    <div id="authModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="modal-close" onclick="cerrarModal()">&times;</span>
+            <h2 id="modalTitle" style="text-align:center; color:#4A0080;">Iniciar Sesión</h2>
+            <form id="authForm">
+                <input type="hidden" id="formType" value="login">
+                
+                <!-- REGISTRO (con atributo name) -->
+                <div id="registerFields" style="display:none;">
+                    <div class="form-group"><label>Nombre completo</label><input type="text" id="regNombre" name="regNombre"></div>
+                    <div class="form-group"><label>Correo electrónico</label><input type="email" id="regEmail" name="regEmail"></div>
+                    <div class="form-group"><label>Contraseña</label><input type="password" id="regPassword" name="regPassword"></div>
+                    <div class="form-group"><label>Registrarme como:</label>
+                        <select id="regRol" name="regRol"><option value="comprador">Comprador</option><option value="vendedor">Vendedor</option></select>
+                    </div>
+                </div>
+
+                <!-- LOGIN NORMAL (Correo) (con atributo name) -->
+                <div id="userLoginFields" style="display:none;">
+                    <div class="form-group"><label>Correo electrónico</label><input type="email" id="loginEmail" name="loginEmail"></div>
+                    <div class="form-group"><label>Contraseña</label><input type="password" id="loginPassword" name="loginPassword"></div>
+                </div>
+
+                <!-- LOGIN ADMIN (Usuario / Nombre) (con atributo name) -->
+                <div id="adminLoginFields" style="display:none;">
+                    <div class="form-group"><label>Usuario (Nombre de Admin)</label><input type="text" id="adminUsername" name="adminUsername" placeholder="Ej. Admin Principal"></div>
+                    <div class="form-group"><label>Contraseña</label><input type="password" id="adminPassword" name="adminPassword"></div>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function abrirModal(tipo) {
+            document.getElementById('authModal').style.display = 'flex';
+            document.getElementById('modalTitle').innerText = tipo === 'admin' ? 'Acceso Administrador' : 'Iniciar Sesión';
+            
+            document.getElementById('registerFields').style.display = 'none';
+            document.getElementById('userLoginFields').style.display = 'none';
+            document.getElementById('adminLoginFields').style.display = 'none';
+            
+            document.getElementById('formType').value = tipo;
+
+            if (tipo === 'registro') {
+                document.getElementById('registerFields').style.display = 'block';
+                document.getElementById('submitBtn').innerText = 'Registrarse';
+            } else if (tipo === 'login') {
+                document.getElementById('userLoginFields').style.display = 'block';
+                document.getElementById('submitBtn').innerText = 'Entrar';
+            } else if (tipo === 'admin') {
+                document.getElementById('adminLoginFields').style.display = 'block';
+                document.getElementById('submitBtn').innerText = 'Entrar';
+            }
+        }
+
+        function cerrarModal() { document.getElementById('authModal').style.display = 'none'; }
+
+        document.getElementById('authForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const type = document.getElementById('formType').value;
+            
+            // Validación de campos obligatorios
+            if (type === 'registro') {
+                const nombre = document.getElementById('regNombre').value.trim();
+                const email = document.getElementById('regEmail').value.trim();
+                const password = document.getElementById('regPassword').value.trim();
+                if (!nombre || !email || !password) {
+                    alert("⚠️ Por favor, rellena todos los campos obligatorios (Nombre, Correo y Contraseña) para registrarte.");
+                    return;
+                }
+            } 
+            else if (type === 'login') {
+                const email = document.getElementById('loginEmail').value.trim();
+                const password = document.getElementById('loginPassword').value.trim();
+                if (!email || !password) {
+                    alert("⚠️ Por favor, ingresa tu Correo electrónico y Contraseña para iniciar sesión.");
+                    return;
+                }
+            } 
+            else if (type === 'admin') {
+                const username = document.getElementById('adminUsername').value.trim();
+                const password = document.getElementById('adminPassword').value.trim();
+                if (!username || !password) {
+                    alert("⚠️ Por favor, ingresa el Usuario (Nombre de Admin) y la Contraseña para acceder al panel.");
+                    return;
+                }
+            }
+            
+            // Petición al servidor
+            let url = '/api/iniciar_sesion';
+            let datos = {};
+
+            if (type === 'registro') {
+                url = '/api/registrar_usuario';
+                datos = {
+                    nombre: document.getElementById('regNombre').value,
+                    email: document.getElementById('regEmail').value,
+                    password: document.getElementById('regPassword').value,
+                    rol: document.getElementById('regRol').value
+                };
+            } else if (type === 'login') {
+                datos = {
+                    usuario: document.getElementById('loginEmail').value,
+                    password: document.getElementById('loginPassword').value,
+                    isAdmin: false
+                };
+            } else if (type === 'admin') {
+                datos = {
+                    usuario: document.getElementById('adminUsername').value,
+                    password: document.getElementById('adminPassword').value,
+                    isAdmin: true
+                };
+            }
+
+            try {
+                const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) });
+                const json = await res.json();
+                if (json.success) {
+                    localStorage.setItem('userType', 'registered');
+                    localStorage.setItem('userId', json.id);
+                    localStorage.setItem('userName', json.nombre);
+                    localStorage.setItem('userRole', json.rol);
+                    alert('¡Bienvenido ' + json.nombre + '!');
+                    if (json.rol === 'admin') window.location.href = '/admin';
+                    else if (json.rol === 'vendedor') window.location.href = '/vendedor/inicio';
+                    else window.location.href = '/comprador/inicio';
+                } else {
+                    alert('Error: ' + json.error);
+                }
+            } catch (e) { alert('Error de conexión con el servidor.'); }
+        });
+
+        window.onclick = function(event) {
+            if (event.target === document.getElementById('authModal')) cerrarModal();
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}{{ local.nombre }} - Conecta Mercado 360{% endblock %}
+
+{% block extra_css %}
+<style>
+    .local-detail-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 5%;
+    }
+
+    .local-detail-header {
+        background: white;
+        border-radius: 2rem;
+        padding: 2rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+        align-items: center;
+        margin-bottom: 2.5rem;
+        box-shadow: 0 10px 20px rgba(86, 0, 158, 0.08);
+        border: 1px solid #FF1493;
+    }
+    .local-detail-header img {
+        width: 300px;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 1.5rem;
+        border: 2px solid #FF1493;
+    }
+    .local-detail-info {
+        flex: 1;
+        min-width: 250px;
+    }
+    .local-detail-info h1 {
+        color: #4A0080;
+        margin-bottom: 0.5rem;
+        font-weight: 800;
+    }
+    .local-detail-info p {
+        color: #6f6f6f;
+        line-height: 1.6;
+    }
+
+    .product-grid-2 {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+        justify-content: center;
+    }
+
+    .product-card-2 {
+        background: white;
+        border-radius: 1.5rem;
+        width: 260px;
+        overflow: hidden;
+        box-shadow: 0 10px 20px rgba(86, 0, 158, 0.08);
+        transition: 0.3s ease;
+        border: 1px solid transparent;
+    }
+    .product-card-2:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 30px rgba(255, 20, 147, 0.15);
+        border-color: #FF1493;
+    }
+    .product-img-2 {
+        height: 180px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f5f5dc;
+    }
+    .product-img-2 img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: 0.3s;
+    }
+    .product-card-2:hover .product-img-2 img {
+        transform: scale(1.05);
+    }
+    .product-info-2 {
+        padding: 1rem;
+    }
+    .product-info-2 h4 {
+        font-size: 1.2rem;
+        margin-bottom: 0.3rem;
+        color: #2e1a30;
+    }
+    .product-info-2 p {
+        color: #6f6f6f;
+        font-size: 0.85rem;
+        margin: 0.3rem 0;
+    }
+    .price {
+        font-weight: 700;
+        color: #FF1493;
+        font-size: 1.2rem;
+    }
+    .btn-add-2 {
+        display: block;
+        width: 100%;
+        background: #F0E6F6;
+        color: #4A0080;
+        border: none;
+        padding: 0.6rem;
+        border-radius: 40px;
+        font-weight: 600;
+        margin-top: 0.8rem;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+    .btn-add-2:hover {
+        background: #FF1493;
+        color: white;
+    }
+
+    @media (max-width: 600px) {
+        .local-detail-header { flex-direction: column; text-align: center; }
+        .local-detail-header img { width: 100%; height: auto; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="local-detail-container">
+    <!-- Encabezado del Local -->
+    <div class="local-detail-header">
+        <img src="{{ local.imagen_local }}" alt="{{ local.nombre }}">
+        <div class="local-detail-info">
+            <h1>🏪 {{ local.nombre }}</h1>
+            <p>{{ local.descripcion }}</p>
+            <a href="/comprador/inicio" style="display:inline-block; margin-top:1rem; background:#4A0080; color:white; text-decoration:none; padding:0.5rem 1.5rem; border-radius:40px; font-weight:600;">← Volver al mercado</a>
+        </div>
+    </div>
+
+    <h2 style="color:#4A0080; border-left:6px solid #FF1493; padding-left:1rem; margin-bottom:2rem;">🛒 Productos de este local</h2>
+
+    <!-- Grid de Productos (Solo 2 productos) -->
+    <div class="product-grid-2">
+        {% for p in productos %}
+        <div class="product-card-2">
+            <div class="product-img-2">
+                {% if p.imagen_url %}
+                    <img src="{{ p.imagen_url }}" alt="{{ p.nombre }}" loading="lazy">
+                {% else %}
+                    <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#f0f0f0; color:#bbb;"><i class="fas fa-image" style="font-size:4rem;"></i></div>
+                {% endif %}
+            </div>
+            <div class="product-info-2">
+                <h4>{{ p.nombre }}</h4>
+                <p>{{ p.descripcion }}</p>
+                <p style="color: #4A0080; font-weight: 500; font-size: 0.9rem;">📦 Quedan: {{ p.stock }} {{ p.unidad }}</p>
+                <p class="price">${{ "%.2f"|format(p.precio) }}/unidad</p>
+                <button onclick="agregarAlCarrito({{ p.id }}, '{{ p.nombre }}', {{ p.precio }}, '{{ p.imagen_url }}', '{{ p.descripcion }}')" class="btn-add-2"><i class="fas fa-cart-plus"></i> Agregar</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if productos|length == 0 %}
+    <p style="text-align:center; color:#999; margin-top:2rem;">Este local aún no tiene productos registrados.</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function agregarAlCarrito(id, nombre, precio, imagen, descripcion) {
+        let userType = localStorage.getItem('userType');
+        if (!userType || userType === 'guest') {
+            alert("🚫 Debes iniciar sesión como comprador para agregar productos al carrito.");
+            return;
+        }
+
+        let cart = JSON.parse(localStorage.getItem('compradorCart')) || [];
+        const existing = cart.find(item => item.id === id);
+        if (existing) {
+            existing.cantidad++;
+        } else {
+            cart.push({
+                id: id,
+                nombre: nombre,
+                precio: precio,
+                cantidad: 1,
+                img: imagen,
+                descripcion: descripcion
+            });
+        }
+        localStorage.setItem('compradorCart', JSON.stringify(cart));
+
+        // Notificación estilo toast
+        let toast = document.createElement('div');
+        toast.innerText = nombre + " agregado al carrito";
+        toast.style.position = 'fixed';
+        toast.style.bottom = '20px';
+        toast.style.right = '20px';
+        toast.style.backgroundColor = '#FF1493';
+        toast.style.color = 'white';
+        toast.style.padding = '12px 20px';
+        toast.style.borderRadius = '40px';
+        toast.style.fontWeight = '500';
+        toast.style.zIndex = '9999';
+        toast.style.boxShadow = '0 4px 12px rgba(255, 20, 147, 0.3)';
+        toast.style.fontFamily = 'Poppins, sans-serif';
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.remove(); }, 2000);
+    }
+</script>
+{% endblock %}

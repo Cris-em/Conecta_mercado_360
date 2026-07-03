@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Mapa del Mercado - Conecta Mercado 360</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-image: url("{{ url_for('static', filename='imagenes/fondo_axolotl.png') }}");
+            background-size: cover; background-attachment: fixed; background-position: center;
+            color: #2e1a30; position: relative;
+        }
+        body::before {
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.85); z-index: -1;
+        }
+        .navbar {
+            display: flex; justify-content: space-between; align-items: center; padding: 1rem 5%;
+            background: rgba(86, 0, 158, 0.96); backdrop-filter: blur(12px);
+            position: sticky; top: 0; z-index: 1000; border-bottom: 3px solid #FF1493; box-shadow: 0 4px 20px rgba(86, 0, 158, 0.2);
+        }
+        .logo a { font-size: 1.6rem; font-weight: 800; color: #f9f7e1; text-decoration: none; }
+        .logo span { color: #FFC400; }
+        .nav-links a { color: #ffffff; text-decoration: none; margin-left: 1.8rem; font-weight: 500; transition: 0.3s; }
+        .nav-links a:hover { color: #FFC400; }
+        .nav-links i { margin-right: 0.4rem; }
+        .container {
+            max-width: 1200px; margin: 2rem auto; padding: 0 5%;
+        }
+        .page-title {
+            font-size: 2rem; font-weight: 600; margin-bottom: 1rem; color: #4A0080; border-left: 6px solid #FF1493; padding-left: 1rem;
+        }
+        .subtitle {
+            color: #4A0080; margin-bottom: 1.5rem; font-weight: 500;
+        }
+        .map-container {
+            background: white; border-radius: 1.5rem; overflow: hidden;
+            box-shadow: 0 20px 30px rgba(86, 0, 158, 0.15); margin-bottom: 1.5rem; border: 1px solid #FF1493;
+        }
+        #map {
+            height: 500px; width: 100%; z-index: 1;
+        }
+        .action-buttons {
+            display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin-top: 1rem;
+        }
+        .btn-maps {
+            background: #FF1493; color: white; border: none; padding: 0.8rem 1.8rem; border-radius: 60px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 0.6rem; text-decoration: none;
+        }
+        .btn-maps i { font-size: 1.2rem; }
+        .btn-maps:hover {
+            background: #FFC400; color: #2e1a30; transform: translateY(-2px); box-shadow: 0 5px 12px rgba(255, 196, 0, 0.3);
+        }
+        .btn-outline {
+            background: transparent; border: 2px solid #FF1493; color: #FF1493;
+        }
+        .btn-outline:hover { background: #FF1493; color: white; }
+        .info-box {
+            background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(8px);
+            border-radius: 1rem; padding: 1rem; margin-top: 1rem; text-align: center; border: 1px solid #FFC400;
+        }
+        footer {
+            background: #2a004a; color: #FF1493; text-align: center; padding: 1.5rem; margin-top: 3rem; border-top: 3px solid #FFC400;
+        }
+        footer a { color: #FFC400; text-decoration: none; }
+        @media (max-width: 800px) {
+            .navbar { flex-direction: column; gap: 0.5rem; } .nav-links a { margin: 0 0.8rem; } #map { height: 350px; }
+        }
+    </style>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo"><a href="/">Conecta<span>Mercado360</span></a></div>
+        <div class="nav-links">
+            <a href="/"><i class="fas fa-home"></i> Inicio</a>
+            <a href="/comprador/inicio"><i class="fas fa-store"></i> Tienda</a>
+            <a href="/comprador/carrito"><i class="fas fa-shopping-cart"></i> Carrito</a>
+            <a href="/comprador/mapa"><i class="fas fa-map-marker-alt"></i> Mapa</a>
+            <a href="/usuario/perfil"><i class="fas fa-user"></i> Mi perfil</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1 class="page-title"><i class="fas fa-map-marked-alt"></i> Ubicación del mercado</h1>
+        <div class="subtitle">Mercado Melchor Ocampo, Calle Benito Juárez, Chimalhuacán</div>
+
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+
+        <div class="action-buttons">
+            <button id="centerMapBtn" class="btn-maps"><i class="fas fa-crosshairs"></i> Centrar mapa</button>
+            <a id="openGoogleMaps" href="#" target="_blank" class="btn-maps"><i class="fab fa-google"></i> Abrir en Google Maps</a>
+            <button id="getRouteBtn" class="btn-maps btn-outline"><i class="fas fa-directions"></i> Mi ubicación → Mercado</button>
+        </div>
+
+        <div class="info-box">
+            <i class="fas fa-store" style="font-size: 1.5rem; color: #FF1493;"></i>
+            <p><strong>Mercado Melchor Ocampo</strong><br>
+            Calle Benito Juárez, 56334 Chimalhuacán, Méx.</p>
+            <p><small>📍 Horario: Lunes a Domingo de 8:00 a 18:30 hrs</small></p>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2026 Conecta Mercado 360 - Tu mercado siempre cerca | <a href="#">Aviso de privacidad</a></p>
+    </footer>
+
+    <script>
+        // 📌 COORDENADAS ACTUALIZADAS: Calle Benito Juárez
+        const marketLat = 19.407194;
+        const marketLng = -98.970341;
+        
+        // Dirección actualizada con el nombre exacto de la calle
+        const marketAddress = "Mercado Melchor Ocampo, Calle Benito Juárez, 56334 Chimalhuacán, Méx.";
+
+        // Inicializar mapa
+        var map = L.map('map').setView([marketLat, marketLng], 16);
+
+        // Capa de mapa (estilo claro)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; CartoDB',
+            subdomains: 'abcd',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Icono personalizado
+        var marketIcon = L.icon({
+            iconUrl: 'https://cdn-icons-png.flaticon.com/512/252/252025.png',
+            iconSize: [38, 38],
+            iconAnchor: [19, 38],
+            popupAnchor: [0, -30]
+        });
+
+        // Marcador principal
+        var marker = L.marker([marketLat, marketLng], { icon: marketIcon }).addTo(map);
+        marker.bindPopup(`
+            <b>🌽 Mercado Melchor Ocampo</b><br>
+            ${marketAddress}<br>
+            <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(marketAddress)}" target="_blank" style="color: #FF1493; font-weight: bold;">📱 Cómo llegar</a>
+        `).openPopup();
+
+        // Centrar mapa
+        document.getElementById('centerMapBtn').addEventListener('click', () => {
+            map.setView([marketLat, marketLng], 17);
+            marker.openPopup();
+        });
+
+        // Google Maps con destino
+        const googleMapsLink = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(marketAddress)}`;
+        document.getElementById('openGoogleMaps').href = googleMapsLink;
+
+        // Ruta desde mi ubicación actual
+        document.getElementById('getRouteBtn').addEventListener('click', () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const userLat = position.coords.latitude; const userLng = position.coords.longitude;
+                        const routeUrl = `https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLng}&destination=${encodeURIComponent(marketAddress)}`;
+                        window.open(routeUrl, '_blank');
+                    },
+                    (error) => { alert("No pudimos obtener tu ubicación."); window.open(googleMapsLink, '_blank'); }
+                );
+            } else { alert("Tu navegador no soporta geolocalización."); window.open(googleMapsLink, '_blank'); }
+        });
+    </script>
+</body>
+</html>

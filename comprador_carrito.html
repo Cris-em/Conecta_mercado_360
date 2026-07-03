@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Carrito - Conecta Mercado 360</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-image: url("{{ url_for('static', filename='imagenes/fondo_axolotl.png') }}");
+            background-size: cover; background-attachment: fixed; background-position: center;
+            position: relative; color: #2e1a30;
+        }
+        body::before {
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.85); z-index: -1;
+        }
+        .navbar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1rem 5%; background: rgba(86, 0, 158, 0.96);
+            backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 1000;
+            border-bottom: 3px solid #FF1493;
+        }
+        .logo a { font-size: 1.6rem; font-weight: 800; color: #f9f7e1; text-decoration: none; }
+        .logo span { color: #FFC400; }
+        .nav-links a { color: #ffffff; text-decoration: none; margin-left: 1.8rem; font-weight: 500; transition: 0.3s; }
+        .nav-links a:hover { color: #FFC400; }
+        .nav-links i { margin-right: 0.4rem; }
+        
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 5%; }
+        .page-title {
+            font-size: 2rem; font-weight: 600; margin-bottom: 1.5rem;
+            color: #4A0080; border-left: 6px solid #FF1493; padding-left: 1rem;
+        }
+        .cart-grid { display: flex; flex-wrap: wrap; gap: 2rem; }
+        .cart-items { flex: 2; min-width: 250px; }
+        .cart-summary {
+            flex: 1; background: white; border-radius: 1.5rem; padding: 1.5rem;
+            box-shadow: 0 10px 20px rgba(86, 0, 158, 0.1);
+            height: fit-content; position: sticky; top: 90px;
+            border: 1px solid #F0E6F6;
+        }
+        .cart-item {
+            background: white; border-radius: 1.2rem; padding: 1.2rem;
+            margin-bottom: 1rem; display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;
+            box-shadow: 0 5px 12px rgba(86, 0, 158, 0.08);
+            border: 1px solid transparent; transition: 0.2s;
+        }
+        .cart-item:hover { transform: translateY(-2px); border-color: #FF1493; }
+        .item-img { width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: #f5f5dc; overflow: hidden; }
+        .item-img img { width: 100%; height: 100%; object-fit: cover; }
+        .item-info { flex: 2; min-width: 150px; }
+        .item-info h4 { font-size: 1.1rem; font-weight: 600; color: #2e1a30; }
+        .item-info .local-name { background: #F0E6F6; color: #4A0080; font-size: 0.75rem; padding: 0.2rem 0.8rem; border-radius: 40px; display: inline-block; margin-bottom: 0.3rem; }
+        
+        .item-controls { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; margin-top: 0.3rem; }
+        .qty-container { display: flex; align-items: center; background: #F0E6F6; border-radius: 40px; overflow: hidden; }
+        .qty-container button { border: none; background: transparent; padding: 0.4rem 0.8rem; font-size: 1.2rem; color: #4A0080; cursor: pointer; transition: 0.2s; }
+        .qty-container button:hover { background: #FF1493; color: white; }
+        .qty-container input { width: 50px; border: none; background: transparent; text-align: center; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 1rem; }
+        .qty-container input:focus { outline: none; }
+        
+        .unit-select { padding: 0.2rem 0.5rem; border: 2px solid #F0E6F6; border-radius: 40px; font-family: 'Poppins', sans-serif; font-weight: 500; background: white; cursor: pointer; transition: 0.2s; }
+        .unit-select:focus { border-color: #FF1493; outline: none; }
+
+        .item-price, .item-total { font-weight: 700; color: #FF1493; min-width: 80px; text-align: right; }
+        .remove-item { background: none; border: none; color: #c0392b; font-size: 1.2rem; cursor: pointer; }
+
+        .summary-row { display: flex; justify-content: space-between; margin: 1rem 0; }
+        .total-row { font-weight: 700; font-size: 1.2rem; color: #4A0080; border-top: 1px solid #ddd; padding-top: 0.8rem; margin-top: 0.8rem; }
+
+        .action-buttons { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
+        .btn-main {
+            width: 100%; padding: 0.8rem; border-radius: 60px; font-weight: 600; font-size: 1rem;
+            cursor: pointer; transition: 0.2s; border: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem;
+        }
+        .btn-pay-later { background: #4A0080; color: white; border: 2px solid #FFC400; }
+        .btn-pay-later:hover { background: #FFC400; color: #2e1a30; }
+        .btn-pay-now { background: #FF1493; color: white; box-shadow: 0 4px 12px rgba(255, 20, 147, 0.3); }
+        .btn-pay-now:hover { background: #FFC400; color: #2e1a30; transform: scale(1.02); }
+
+        /* =========================================== */
+        /* NUEVA SECCIÓN: HISTORIAL DE PEDIDOS          */
+        /* =========================================== */
+        .pedidos-section {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 2px solid #FF1493;
+        }
+        .pedido-card {
+            background: white;
+            border-radius: 1.2rem;
+            padding: 1.2rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 5px 12px rgba(86, 0, 158, 0.08);
+            border: 1px solid #F0E6F6;
+        }
+        .pedido-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 0.8rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 0.8rem;
+        }
+        .pedido-id { font-weight: 700; color: #2e1a30; }
+        .pedido-fecha { color: #6f6f6f; font-size: 0.9rem; }
+        .pedido-estado {
+            background: #FFF3CD;
+            color: #856404;
+            padding: 0.2rem 0.8rem;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+        .pedido-estado.pagado {
+            background: #D4EDDA;
+            color: #155724;
+        }
+        .pedido-productos-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.8rem; }
+        .pedido-producto-item {
+            background: #F0E6F6;
+            padding: 0.3rem 0.8rem;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            color: #4A0080;
+        }
+        .pedido-total {
+            text-align: right;
+            font-weight: 700;
+            color: #4A0080;
+            font-size: 1.1rem;
+        }
+        /* =========================================== */
+
+        /* MODALES DE PAGO Y TICKET */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 2rem; border-radius: 2rem; width: 90%; max-width: 450px; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        .modal-close { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; cursor: pointer; color: #888; transition: 0.2s; }
+        .modal-close:hover { color: #FF1493; }
+
+        .ticket-modal-content { border-top: 8px solid #FF1493; }
+        .pay-modal-content { border-top: 8px solid #4A0080; }
+        
+        .ticket-box-print { background: #fcfcfc; border-radius: 12px; padding: 1.5rem; border: 1px dashed #4A0080; font-family: 'Courier New', Courier, monospace; text-align: left; }
+        .ticket-title { text-align: center; border-bottom: 1px dashed #4A0080; padding-bottom: 10px; margin-bottom: 10px; color: #4A0080; font-weight: 800; }
+        .ticket-item { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 5px; }
+        .ticket-total { border-top: 2px solid #4A0080; padding-top: 10px; margin-top: 10px; font-weight: bold; display: flex; justify-content: space-between; }
+        .ticket-status { text-align: center; font-size: 1.2rem; font-weight: bold; padding: 5px; margin-top: 10px; }
+        .status-pending { color: #d35400; }
+        .status-paid { color: #27ae60; }
+
+        .modal-input { width: 100%; padding: 0.8rem 1rem; border: 2px solid #F0E6F6; border-radius: 12px; font-family: 'Poppins', sans-serif; margin-bottom: 1rem; transition: 0.2s; }
+        .modal-input:focus { border-color: #FF1493; outline: none; }
+        .row-2cols { display: flex; gap: 1rem; }
+        .btn-submit-pay { width: 100%; background: #FF1493; color: white; border: none; padding: 0.8rem; border-radius: 60px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: 0.2s; }
+        .btn-submit-pay:hover { background: #FFC400; color: #2e1a30; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #ticketPrintArea, #ticketPrintArea * { visibility: visible; }
+            #ticketPrintArea { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
+        }
+        @media (max-width: 800px) { .navbar { flex-direction: column; gap: 10px; } .cart-grid { flex-direction: column; } }
+    </style>
+</head>
+<body>
+    <div class="navbar no-print">
+        <div class="logo"><a href="/">Conecta<span>Mercado360</span></a></div>
+        <div class="nav-links">
+            <a href="/"><i class="fas fa-home"></i> Inicio</a>
+            <a href="/comprador/inicio"><i class="fas fa-store"></i> Tienda</a>
+            <a href="/comprador/carrito"><i class="fas fa-shopping-cart"></i> Carrito</a>
+            <a href="/comprador/mapa"><i class="fas fa-map-marker-alt"></i> Mapa</a>
+            <a href="/usuario/perfil"><i class="fas fa-user"></i> Mi perfil</a>
+        </div>
+    </div>
+
+    <div class="container no-print">
+        <h1 class="page-title"><i class="fas fa-shopping-cart"></i> Mi carrito</h1>
+        <div class="cart-grid">
+            <div class="cart-items" id="cartItemsContainer"></div>
+            <div class="cart-summary" id="cartSummary">
+                <h3>Resumen del pedido</h3>
+                <div class="summary-row"><span>Subtotal</span><span id="subtotal">$0.00</span></div>
+                <div class="summary-row total-row"><span>Total</span><span id="total">$0.00</span></div>
+                <div class="action-buttons">
+                    <button class="btn-main btn-pay-later" id="btnPayLater"><i class="fas fa-clock"></i> Comprar ahora y pagar después</button>
+                    <button class="btn-main btn-pay-now" id="btnPayNow"><i class="fas fa-credit-card"></i> Pagar ahora</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- NUEVA SECCIÓN: HISTORIAL DE PEDIDOS         -->
+        <!-- ========================================== -->
+        <div class="pedidos-section" id="pedidosContainer" style="display:none;">
+            <h1 class="page-title"><i class="fas fa-history"></i> Historial de Pedidos</h1>
+            <div id="pedidosList">
+                <!-- Generado por JS -->
+            </div>
+        </div>
+        <!-- ========================================== -->
+    </div>
+
+    <!-- MODAL DE PAGO CON TARJETA -->
+    <div id="paymentModal" class="modal-overlay">
+        <div class="modal-content pay-modal-content">
+            <span class="modal-close" onclick="cerrarModalPago()">&times;</span>
+            <h3 style="text-align: center; color: #4A0080; margin-bottom: 1.5rem;"><i class="fas fa-lock"></i> Pago Seguro</h3>
+            <form id="paymentForm">
+                <label style="font-weight: 600; color: #4A0080;">Número de tarjeta</label>
+                <input type="text" class="modal-input" placeholder="1234 5678 9012 3456" required>
+                <div class="row-2cols">
+                    <div><label style="font-weight: 600; color: #4A0080;">Vencimiento</label><input type="text" class="modal-input" placeholder="MM/AA" required></div>
+                    <div><label style="font-weight: 600; color: #4A0080;">CVV</label><input type="text" class="modal-input" placeholder="123" required></div>
+                </div>
+                <button type="submit" class="btn-submit-pay"><i class="fas fa-check-circle"></i> Confirmar y Pagar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DEL TICKET (UNIFICADO PARA AMBOS BOTONES) -->
+    <div id="ticketModal" class="modal-overlay">
+        <div class="modal-content ticket-modal-content">
+            <span class="modal-close" onclick="cerrarModalTicket()">&times;</span>
+            <h3 style="text-align: center; color: #4A0080; margin-bottom: 0.5rem; margin-top: 0.5rem;">🧾 Tu Ticket</h3>
+            <div id="ticketPrintArea" class="ticket-box-print">
+                <div id="ticketContent"></div>
+            </div>
+            <div style="margin-top: 1rem; display: flex; justify-content: center;">
+                <button class="btn-main btn-pay-now" style="width: 100%; background: #FFC400; color: #2e1a30;" onclick="imprimirTicket()">
+                    <i class="fas fa-download"></i> Descargar como PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let cart = [];
+
+        function guardarCarrito() { localStorage.setItem('compradorCart', JSON.stringify(cart)); }
+        function cargarCarrito() { const stored = localStorage.getItem('compradorCart'); cart = stored ? JSON.parse(stored) : []; renderizarCarrito(); }
+
+        function renderizarCarrito() {
+            const container = document.getElementById('cartItemsContainer');
+            const summary = document.getElementById('cartSummary');
+            if (!cart.length) {
+                container.innerHTML = `<div class="empty-cart"><i class="fas fa-basket-shopping"></i><h3>Tu carrito está vacío</h3><p>¡Agrega productos frescos desde nuestra tienda!</p><a href="/comprador/inicio" class="btn-seguir"><i class="fas fa-arrow-left"></i> Seguir comprando</a></div>`;
+                document.getElementById('subtotal').innerText = '$0.00';
+                document.getElementById('total').innerText = '$0.00';
+                summary.style.display = 'none'; return;
+            }
+            summary.style.display = 'block';
+            let subtotal = 0; let html = '';
+            cart.forEach((item, index) => {
+                const imgHtml = (item.img && item.img.trim() !== '') 
+                    ? `<img src="${item.img}" alt="${item.nombre}" onerror="this.onerror=null;this.parentElement.innerHTML='<i class=\\'fas fa-image\\' style=\\'font-size: 2rem; color: #ccc;\\'></i>';">` 
+                    : `<i class="fas fa-image" style="font-size: 2rem; color: #ccc;"></i>`;
+                html += `
+                    <div class="cart-item" data-index="${index}">
+                        <div class="item-img">${imgHtml}</div>
+                        <div class="item-info">
+                            <h4>${item.nombre}</h4>
+                            <p>${item.descripcion || ''}</p>
+                            <div class="item-controls">
+                                <div class="qty-container">
+                                    <button class="qty-btn minus" data-index="${index}">-</button>
+                                    <input type="number" class="qty-input" data-index="${index}" value="${item.cantidad || 1}" min="1">
+                                    <button class="qty-btn plus" data-index="${index}">+</button>
+                                </div>
+                                <select class="unit-select" data-index="${index}">
+                                    <option value="unidad" ${item.unidad === 'unidad' ? 'selected' : ''}>Unidades</option>
+                                    <option value="kg" ${item.unidad === 'kg' ? 'selected' : ''}>kg</option>
+                                    <option value="g" ${item.unidad === 'g' ? 'selected' : ''}>g</option>
+                                    <option value="L" ${item.unidad === 'L' ? 'selected' : ''}>L</option>
+                                    <option value="ml" ${item.unidad === 'ml' ? 'selected' : ''}>ml</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="item-price">$${parseFloat(item.precio).toFixed(2)}</div>
+                        <div class="item-total" id="itemTotal_${index}">$${(item.precio * item.cantidad).toFixed(2)}</div>
+                        <button class="remove-item" data-index="${index}"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                `;
+                subtotal += (item.precio * item.cantidad);
+            });
+            container.innerHTML = html;
+            document.getElementById('subtotal').innerText = `$${subtotal.toFixed(2)}`;
+            document.getElementById('total').innerText = `$${subtotal.toFixed(2)}`;
+
+            document.querySelectorAll('.qty-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = this.dataset.index;
+                    const input = document.querySelector(`.qty-input[data-index="${index}"]`);
+                    let val = parseInt(input.value);
+                    if (this.classList.contains('minus') && val > 1) val--;
+                    if (this.classList.contains('plus')) val++;
+                    input.value = val;
+                    actualizarItem(index, val);
+                });
+            });
+            document.querySelectorAll('.qty-input').forEach(input => {
+                input.addEventListener('input', function() {
+                    const index = this.dataset.index;
+                    let val = parseInt(this.value);
+                    if (isNaN(val) || val < 1) val = 1;
+                    actualizarItem(index, val);
+                });
+            });
+            document.querySelectorAll('.unit-select').forEach(select => {
+                select.addEventListener('change', function() {
+                    const index = this.dataset.index;
+                    cart[index].unidad = this.value;
+                    guardarCarrito();
+                });
+            });
+            document.querySelectorAll('.remove-item').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = this.dataset.index;
+                    cart.splice(index, 1);
+                    guardarCarrito();
+                    renderizarCarrito();
+                });
+            });
+        }
+
+        function actualizarItem(index, nuevaCantidad) {
+            if(index >= cart.length) return;
+            cart[index].cantidad = nuevaCantidad;
+            guardarCarrito();
+            const itemTotalSpan = document.getElementById(`itemTotal_${index}`);
+            if (itemTotalSpan) {
+                const totalItem = cart[index].precio * nuevaCantidad;
+                itemTotalSpan.innerText = `$${totalItem.toFixed(2)}`;
+            }
+            let subtotal = 0;
+            cart.forEach(item => subtotal += (item.precio * item.cantidad));
+            document.getElementById('subtotal').innerText = `$${subtotal.toFixed(2)}`;
+            document.getElementById('total').innerText = `$${subtotal.toFixed(2)}`;
+        }
+
+        // --- Lógica central de compra ---
+        async function realizarPedido(estado) {
+            const userId = localStorage.getItem('userId');
+            if (!userId) { alert("⚠️ Debes iniciar sesión para realizar la compra."); return; }
+            if (cart.length === 0) { alert("🛒 El carrito está vacío."); return; }
+
+            const total = parseFloat(document.getElementById('total').innerText.replace('$', ''));
+            const datos = { usuario_id: userId, items: cart, estado: estado, total: total };
+
+            try {
+                const res = await fetch('/api/procesar_pedido', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datos)
+                });
+                const json = await res.json();
+                if (json.success) {
+                    cart = [];
+                    guardarCarrito();
+                    renderizarCarrito();
+                    mostrarTicket(estado);
+                } else {
+                    alert("❌ Error: " + json.error);
+                }
+            } catch (e) {
+                console.error(e);
+                alert("❌ Error de conexión con el servidor. Revisa que XAMPP esté encendido.");
+            }
+        }
+
+        function generarTicketHTML(estado) {
+            const fecha = new Date();
+            const fechaStr = fecha.toLocaleDateString('es-MX') + ' ' + fecha.toLocaleTimeString('es-MX');
+            const orderNum = Math.floor(Math.random() * 999999) + 100000;
+            let subtotal = 0; let itemsHtml = '';
+            cart.forEach(item => {
+                const totalItem = item.precio * item.cantidad;
+                subtotal += totalItem;
+                const unidad = item.unidad || 'unidad';
+                itemsHtml += `<div class="ticket-item"><span>${item.nombre} (${item.cantidad} ${unidad})</span><span>$${totalItem.toFixed(2)}</span></div>`;
+            });
+            const totalFinal = subtotal;
+            const statusClass = estado === 'Pagado' ? 'status-paid' : 'status-pending';
+            return `
+                <div class="ticket-title">
+                    🦎 CONECTA MERCADO 360<br>
+                    <span style="font-size:0.7rem; font-weight:400; color:#666;">Mercado Melchor Ocampo</span>
+                </div>
+                <div style="font-size:0.7rem; text-align:center; margin-bottom:10px;">
+                    Ticket #${orderNum} <br> ${fechaStr}
+                </div>
+                ${itemsHtml}
+                <div class="ticket-item" style="margin-top:10px; border-top: 1px dashed #ccc; padding-top:10px;">
+                    <span>Subtotal</span><span>$${subtotal.toFixed(2)}</span>
+                </div>
+                <div class="ticket-total"><span>TOTAL</span><span>$${totalFinal.toFixed(2)}</span></div>
+                <div class="ticket-status ${statusClass}">${estado === 'Pagado' ? '✅ PAGADO - ¡Gracias por tu compra!' : '⏳ PENDIENTE DE PAGO'}</div>
+                <div style="text-align:center; font-size:0.7rem; margin-top:10px; color:#888;">¡Apoyemos el comercio local!</div>
+            `;
+        }
+
+        function mostrarTicket(estado) {
+            document.getElementById('ticketContent').innerHTML = generarTicketHTML(estado);
+            document.getElementById('ticketModal').style.display = 'flex';
+        }
+
+        function imprimirTicket() { window.print(); }
+        function cerrarModalTicket() { document.getElementById('ticketModal').style.display = 'none'; }
+
+        document.getElementById('btnPayLater').addEventListener('click', function() {
+            realizarPedido('Pendiente de pago');
+        });
+
+        function cerrarModalPago() { document.getElementById('paymentModal').style.display = 'none'; }
+        document.getElementById('btnPayNow').addEventListener('click', function() {
+            if (cart.length === 0) { alert("🛒 El carrito está vacío."); return; }
+            document.getElementById('paymentModal').style.display = 'flex';
+        });
+
+        document.getElementById('paymentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            cerrarModalPago();
+            realizarPedido('Pagado');
+        });
+
+        window.onclick = function(event) {
+            const pModal = document.getElementById('paymentModal');
+            const tModal = document.getElementById('ticketModal');
+            if (event.target == pModal) pModal.style.display = 'none';
+            if (event.target == tModal) tModal.style.display = 'none';
+        }
+
+        // =========================================================
+        // NUEVO: FUNCIÓN PARA CARGAR EL HISTORIAL DE PEDIDOS
+        // =========================================================
+        async function cargarPedidos() {
+            const userId = localStorage.getItem('userId');
+            if (!userId) return; // Si no está logueado, no cargamos nada
+
+            try {
+                const res = await fetch(`/api/pedidos_usuario?user_id=${userId}`);
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+
+                const container = document.getElementById('pedidosContainer');
+                const list = document.getElementById('pedidosList');
+
+                if (!data.pedidos || data.pedidos.length === 0) {
+                    container.style.display = 'block';
+                    list.innerHTML = '<p style="color: #999; text-align: center; padding: 2rem;">Aún no has realizado ningún pedido.</p>';
+                    return;
+                }
+
+                container.style.display = 'block';
+                list.innerHTML = data.pedidos.map(p => {
+                    const fecha = new Date(p.fecha);
+                    const fechaStr = fecha.toLocaleDateString('es-MX') + ' ' + fecha.toLocaleTimeString('es-MX');
+                    const estadoClass = p.estado === 'Pagado' ? 'pagado' : '';
+
+                    return `
+                        <div class="pedido-card">
+                            <div class="pedido-header">
+                                <div>
+                                    <span class="pedido-id">📦 Pedido #${p.id}</span>
+                                    <span class="pedido-fecha">${fechaStr}</span>
+                                </div>
+                                <span class="pedido-estado ${estadoClass}">${p.estado}</span>
+                            </div>
+                            <div class="pedido-productos-list">
+                                ${p.productos.map(prod => `
+                                    <span class="pedido-producto-item">${prod.nombre} (x${prod.cantidad})</span>
+                                `).join('')}
+                            </div>
+                            <div class="pedido-total">Total: $${p.total.toFixed(2)}</div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (e) {
+                console.error("Error cargando pedidos:", e);
+            }
+        }
+        // =========================================================
+
+        // Inicializar al cargar la página
+        cargarCarrito();
+        cargarPedidos(); // Cargamos el historial
+    </script>
+</body>
+</html>

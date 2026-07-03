@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Ventas - Conecta Mercado 360</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <style>
+        :root { --rosa-mexicano: #FF1493; --morado-intenso: #4A0080; --morado-claro: #F0E6F6; --amarillo-vibrante: #FFC400; --blanco: #ffffff; --cafe-oscuro: #2e1a30; --gris-texto: #6f6f6f; }
+        body { background-image: url("/static/imagenes/fondo_axolotl.png"); background-size: cover; background-attachment: fixed; background-position: center; font-family: 'Poppins', sans-serif; position: relative; }
+        body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.85); z-index: -1; }
+        .app-layout { display: flex; min-height: 100vh; }
+        .sidebar { width: 230px; background: var(--morado-intenso); backdrop-filter: blur(12px); padding: 24px 16px; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; border-right: 2px solid var(--rosa-mexicano); }
+        .sidebar-logo { font-family: 'Poppins'; font-size: 1.4rem; font-weight: 800; color: #f9f7e1; text-align: center; margin-bottom: 30px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.15); }
+        .sidebar-item { display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,0.8); text-decoration: none; padding: 10px 14px; border-radius: 40px; font-weight: 500; margin-bottom: 8px; transition: all 0.25s ease; }
+        .sidebar-item:hover, .sidebar-item.active { background: var(--rosa-mexicano); color: white; transform: translateX(4px); }
+        .sidebar-item i { font-size: 1.2rem; }
+        .main-content { flex: 1; padding: 28px; max-width: calc(100% - 230px); }
+        .page-title { font-size: 1.8rem; font-weight: 700; color: var(--morado-intenso); margin-bottom: 1.5rem; border-left: 6px solid var(--rosa-mexicano); padding-left: 1rem; }
+        .card-tabla { background: var(--blanco); border-radius: 20px; padding: 0; overflow: hidden; box-shadow: 0 4px 16px rgba(74, 0, 128, 0.1); }
+        .ventas-table { width: 100%; border-collapse: collapse; }
+        .ventas-table thead th { background: var(--morado-intenso); color: var(--blanco); padding: 14px 16px; text-align: left; font-family: 'Poppins'; font-size: 0.95rem; }
+        .ventas-table tbody tr { border-bottom: 1px solid var(--morado-claro); }
+        .ventas-table td { padding: 14px 16px; vertical-align: middle; }
+        .estado-pill { padding: 4px 12px; border-radius: 50px; font-size: 0.8rem; font-weight: 700; }
+        .estado-pagado { background: #D4EDDA; color: #155724; }
+        .estado-pendiente { background: #FFF3CD; color: #856404; }
+        .venta-cliente { font-weight: 700; color: var(--cafe-oscuro); }
+        .btn-marcar-pagado { background: #4A0080; color: white; border: none; padding: 4px 12px; border-radius: 50px; font-weight: 600; font-size: 0.75rem; cursor: pointer; transition: 0.2s; }
+        .btn-marcar-pagado:hover { background: #27ae60; transform: scale(1.02); }
+
+        /*  NUEVO: BUSCADOR PARA VENDEDOR */
+        .search-wrapper { display: flex; justify-content: flex-end; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #eee; }
+        .search-input-seller { width: 100%; max-width: 350px; padding: 0.5rem 1rem; border: 2px solid #F0E6F6; border-radius: 50px; font-family: 'Poppins', sans-serif; transition: 0.2s; outline: none; }
+        .search-input-seller:focus { border-color: #FF1493; }
+
+        @media (max-width: 750px) { .app-layout { flex-direction: column; } .sidebar { width: 100%; height: auto; flex-direction: row; overflow-x: auto; border-right: none; border-bottom: 2px solid var(--rosa-mexicano); } .sidebar-logo { display: none; } .main-content { max-width: 100%; padding: 16px; } }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">🦎 CM360<br><small style="font-size:0.7rem;">Vendedor</small></div>
+    <a href="/vendedor/inicio" class="sidebar-item"><i class="fas fa-home"></i> Mi Puesto</a>
+    <a href="/vendedor/subir-producto" class="sidebar-item"><i class="fas fa-upload"></i> Subir Producto</a>
+    <a href="/vendedor/stock" class="sidebar-item"><i class="fas fa-boxes"></i> Mi Stock</a>
+    <a href="/vendedor/ventas" class="sidebar-item active"><i class="fas fa-chart-line"></i> Mis Ventas</a>
+    <a href="/vendedor/perfil" class="sidebar-item"><i class="fas fa-user-circle"></i> Mi Perfil</a>
+    <div style="flex:1"></div>
+    <a href="/" class="sidebar-item" style="border-top:1px solid rgba(255,255,255,0.15);padding-top:16px;"><i class="fas fa-exchange-alt"></i> Cambiar Rol</a>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-title">📊 Mis Ventas</div>
+
+    <!-- BARRA DE BÚSQUEDA -->
+    <div class="search-wrapper">
+        <input type="text" id="ventasSearch" class="search-input-seller" placeholder="🔍 Buscar por pedido, cliente, producto...">
+    </div>
+
+    <div class="card-tabla">
+      <table class="ventas-table">
+        <thead>
+          <tr>
+            <th>Pedido #</th>
+            <th>Fecha</th>
+            <th>Cliente</th>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Total</th>
+            <th>Estado / Acción</th>
+          </tr>
+        </thead>
+        <tbody id="ventasTableBody">
+          <!-- Generado por JS -->
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script>
+    const userId = localStorage.getItem('userId');
+
+    async function cargarVentas() {
+        if (!userId) {
+            alert("Debes iniciar sesión como vendedor.");
+            window.location.href = '/';
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/vendedor/ventas?user_id=${userId}`);
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+
+            const tbody = document.getElementById('ventasTableBody');
+
+            if (!data.ventas || data.ventas.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:2rem; color:#999;">Aún no has recibido ninguna venta.</td></tr>`;
+                return;
+            }
+
+            // Guardamos en memoria para filtrar
+            window.__ventasData = data.ventas;
+            renderizarVentas(data.ventas);
+
+        } catch (e) {
+            console.error("Error cargando ventas:", e);
+            document.getElementById('ventasTableBody').innerHTML = `<tr><td colspan="7" style="text-align:center; padding:2rem; color:red;">Error al cargar las ventas.</td></tr>`;
+        }
+    }
+
+    function renderizarVentas(ventas) {
+        const tbody = document.getElementById('ventasTableBody');
+        let html = '';
+        ventas.forEach(v => {
+            const fecha = new Date(v.fecha);
+            const fechaStr = fecha.toLocaleDateString('es-MX') + ' ' + fecha.toLocaleTimeString('es-MX');
+            const estadoClass = v.estado === 'Pagado' ? 'estado-pagado' : 'estado-pendiente';
+            const totalItem = v.cantidad * v.precio_unitario;
+
+            let estadoHtml = `<span class="estado-pill ${estadoClass}">${v.estado}</span>`;
+            if (v.estado === 'Pendiente de pago') {
+                estadoHtml += `
+                    <br>
+                    <button class="btn-marcar-pagado" onclick="marcarComoPagado(${v.pedido_id}, this)">
+                        ✅ Marcar como Pagado
+                    </button>
+                `;
+            }
+
+            html += `
+                <tr>
+                    <td><strong>#${v.pedido_id}</strong></td>
+                    <td>${fechaStr}</td>
+                    <td class="venta-cliente">${v.cliente_nombre}</td>
+                    <td>${v.producto_nombre}</td>
+                    <td>${v.cantidad}</td>
+                    <td style="color: var(--rosa-mexicano); font-weight:700;">$${totalItem.toFixed(2)}</td>
+                    <td>${estadoHtml}</td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    }
+
+    //  Lógica de búsqueda en vivo para vendedor
+    document.getElementById('ventasSearch').addEventListener('keyup', function() {
+        const busqueda = this.value.toLowerCase().trim();
+        const datos = window.__ventasData || [];
+        if (busqueda === '') {
+            renderizarVentas(datos);
+            return;
+        }
+        const filtrados = datos.filter(v => {
+            const values = [v.pedido_id, v.cliente_nombre, v.producto_nombre, v.estado, v.fecha].join(' ').toLowerCase();
+            return values.includes(busqueda);
+        });
+        renderizarVentas(filtrados);
+    });
+
+    async function marcarComoPagado(pedidoId, boton) {
+        if (!confirm("¿Estás seguro de que quieres marcar este pedido como PAGADO?")) return;
+        try {
+            const res = await fetch('/api/vendedor/actualizar_estado_pedido', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pedido_id: pedidoId, estado: 'Pagado', user_id: userId })
+            });
+            const data = await res.json();
+            if (data.success) { alert("✅ Pedido marcado como Pagado exitosamente."); cargarVentas(); } 
+            else alert("❌ Error: " + data.error);
+        } catch (e) { alert("❌ Error de conexión. Revisa la terminal de VS Code."); }
+    }
+
+    cargarVentas();
+</script>
+</body>
+</html>

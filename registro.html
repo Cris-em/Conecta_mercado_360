@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - Conecta Mercado 360</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-image: url("/static/imagenes/fondo_axolotl.png");
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(86, 0, 158, 0.4);
+            z-index: -1;
+        }
+        .reg-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border-radius: 2.5rem;
+            padding: 2.5rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.2);
+            border: 2px solid rgba(255, 20, 147, 0.3);
+        }
+        .reg-title {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #FF1493, #FFC400);
+            background-clip: text; /* Estándar */
+            -webkit-background-clip: text; /* WebKit */
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .form-group { margin-bottom: 1.2rem; }
+        label { display: block; font-weight: 600; color: #4A0080; margin-bottom: 0.3rem; }
+        input, select {
+            width: 100%; padding: 0.7rem 1rem;
+            border: 2px solid #F0E6F6; border-radius: 50px;
+            font-family: 'Poppins', sans-serif; transition: 0.2s;
+        }
+        input:focus, select:focus { border-color: #FF1493; outline: none; box-shadow: 0 0 0 3px rgba(255,20,147,0.1); }
+        .btn-submit {
+            width: 100%; background: #FF1493; color: white; border: none;
+            padding: 0.8rem; border-radius: 60px; font-weight: 600;
+            margin-top: 1rem; cursor: pointer; transition: 0.2s;
+        }
+        .btn-submit:hover { background: #FFC400; color: #2e1a30; }
+        .back-link { display: block; text-align: center; margin-top: 1rem; color: #4A0080; text-decoration: none; font-weight: 500; }
+        .back-link:hover { color: #FF1493; }
+        @media (max-width: 600px) {
+            .reg-card { padding: 2rem; width: 95%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="reg-card">
+        <div class="reg-title">Crear Cuenta</div>
+        <form id="regForm">
+            <div class="form-group">
+                <label>Nombre completo</label>
+                <input type="text" id="regNombre" placeholder="Ej. Cristian Eduardo" required>
+            </div>
+            <div class="form-group">
+                <label>Correo electrónico</label>
+                <input type="email" id="regEmail" placeholder="ejemplo@gmail.com" required>
+            </div>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" id="regPassword" placeholder="Mínimo 6 caracteres" required>
+            </div>
+            <div class="form-group">
+                <label>Quiero ser:</label>
+                <select id="regRol">
+                    <option value="comprador">Comprador</option>
+                    <option value="vendedor">Vendedor</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-submit">Registrarse</button>
+        </form>
+        <a href="/" class="back-link">← Volver al inicio de sesión</a>
+    </div>
+
+    <script>
+        document.getElementById('regForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const nombre = document.getElementById('regNombre').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            const rol = document.getElementById('regRol').value;
+            
+            try {
+                const res = await fetch('/api/registrar_usuario', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre, email, password, rol })
+                });
+                const json = await res.json();
+                if (json.success) {
+                    alert("✅ Cuenta creada. Ahora ve a Iniciar Sesión.");
+                    window.location.href = '/';
+                } else {
+                    alert("❌ Error: " + json.error);
+                }
+            } catch (e) {
+                alert("❌ Error de conexión con el servidor. Revisa que XAMPP esté encendido.");
+                console.error(e);
+            }
+        });
+    </script>
+</body>
+</html>

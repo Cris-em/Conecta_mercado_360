@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>{% block title %}Conecta Mercado 360{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background-image: url("/static/imagenes/fondo_axolotl.png"); background-size: cover; background-attachment: fixed; background-position: center; background-repeat: no-repeat; color: #2e1a30; position: relative; }
+        body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.80); z-index: -1; }
+        html { scroll-behavior: smooth; }
+        .global-nav-buttons { position: fixed; bottom: 20px; left: 20px; z-index: 9999; display: flex; gap: 12px; background: rgba(86, 0, 158, 0.95); backdrop-filter: blur(12px); padding: 8px 16px; border-radius: 60px; border: 2px solid #FF1493; box-shadow: 0 4px 12px rgba(86, 0, 158, 0.3); }
+        .global-nav-btn { background: #FF1493; border: none; color: white; font-family: 'Inter', sans-serif; font-weight: 600; padding: 8px 16px; border-radius: 40px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .global-nav-btn i { font-size: 1rem; }
+        .global-nav-btn:first-child { background: #FF1493; }
+        .global-nav-btn:last-child { background: #FFC400; color: #2e1a30; }
+        .global-nav-btn:hover { filter: brightness(1.1); transform: scale(1.05); }
+        .audio-player { position: fixed; bottom: 22px; right: 22px; z-index: 2000; }
+        .audio-toggle { background: rgba(86, 0, 158, 0.95); backdrop-filter: blur(12px); border-radius: 50px; padding: 8px 16px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.3s ease; border: 1px solid #FFC400; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        .audio-toggle i { font-size: 1.2rem; color: #FF1493; }
+        .audio-toggle span { font-size: 0.8rem; font-weight: 500; color: #ffffff; }
+        .audio-controls { background: rgba(86, 0, 158, 0.95); backdrop-filter: blur(12px); border-radius: 60px; padding: 8px 20px; display: flex; align-items: center; gap: 15px; margin-top: 8px; border: 1px solid #FF1493; transition: all 0.3s ease; transform-origin: top right; transform: scaleY(0); opacity: 0; visibility: hidden; pointer-events: none; }
+        .audio-controls.show { transform: scaleY(1); opacity: 1; visibility: visible; pointer-events: auto; }
+        .audio-controls button { background: #FF1493; border: none; color: white; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; transition: 0.2s; }
+        .audio-controls button:hover { background: #FFC400; color: #2e1a30; transform: scale(1.05); }
+        .volume-slider { width: 70px; cursor: pointer; accent-color: #FF1493; }
+        #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(86, 0, 158, 0.96); backdrop-filter: blur(8px); z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.8s ease, visibility 0.8s ease; }
+        #splash-screen.hide { opacity: 0; visibility: hidden; }
+        #splash-video { width: 80%; max-width: 500px; border-radius: 1rem; box-shadow: 0 0 20px rgba(255, 20, 147, 0.3); margin-bottom: 1.5rem; }
+        .loading-text { color: #FF1493; font-size: 1.5rem; font-weight: 600; letter-spacing: 2px; text-shadow: 0 2px 5px rgba(0,0,0,0.3); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 0.9rem 6%; background: rgba(86, 0, 158, 0.96); backdrop-filter: blur(14px); position: sticky; top: 0; z-index: 1000; border-bottom: 3px solid #FF1493; }
+        .logo a { font-size: 1.7rem; font-weight: 800; background: linear-gradient(135deg, #FF1493, #FFC400); background-clip: text; -webkit-background-clip: text; color: transparent; text-decoration: none; }
+        .nav-links { display: flex; gap: 1.6rem; flex-wrap: wrap; }
+        .nav-links a { color: #ffffff; text-decoration: none; font-weight: 500; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+        .nav-links a:hover { color: #FFC400; transform: translateY(-2px); }
+        footer { background: #2a004a; color: #FF1493; text-align: center; padding: 2rem; margin-top: 3rem; border-top: 3px solid #FFC400; }
+        @media (max-width: 700px) { .global-nav-buttons { bottom: 80px; left: 10px; padding: 5px 12px; } .global-nav-btn { padding: 6px 12px; font-size: 12px; } .audio-toggle span { display: none; } .audio-toggle { padding: 6px 12px; } .navbar { flex-direction: column; gap: 10px; } #splash-video { width: 90%; } .loading-text { font-size: 1.2rem; } }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div id="splash-screen">
+        <video id="splash-video" autoplay muted playsinline>
+            <source src="{{ url_for('static', filename='videos/WhatsApp Video 2026-06-08 at 12.11.15 PM.mp4') }}" type="video/mp4">
+            Tu navegador no soporta video.
+        </video>
+        <div class="loading-text">CARGANDO...</div>
+    </div>
+    <div class="global-nav-buttons">
+        <button id="globalBtnVolver" class="global-nav-btn"><i class="fas fa-arrow-left"></i> Volver</button>
+        <button id="globalBtnInicio" class="global-nav-btn"><i class="fas fa-home"></i> Inicio</button>
+    </div>
+    {% block content %}{% endblock %}
+    <div class="audio-player">
+        <div class="audio-toggle" id="audioToggle">
+            <i class="fas fa-music"></i>
+            <span>🎵 Sonido ambiente</span>
+        </div>
+        <div class="audio-controls" id="audioControls">
+            <button id="playPauseBtn"><i class="fas fa-play"></i></button>
+            <input type="range" id="volumeControl" class="volume-slider" min="0" max="1" step="0.01" value="0.4">
+        </div>
+    </div>
+    <script>
+        (function() {
+            const splash = document.getElementById('splash-screen');
+            const splashVideo = document.getElementById('splash-video');
+            if (splash && splashVideo) {
+                splashVideo.play();
+                setTimeout(() => { splash.classList.add('hide'); splashVideo.pause(); }, 5000);
+                splashVideo.addEventListener('ended', () => { splash.classList.add('hide'); });
+            }
+            const audio = new Audio("{{ url_for('static', filename='audios/Salsa_pagina.mp3') }}");
+            audio.loop = true; audio.volume = 0.4; let isPlaying = false;
+            const playPauseBtn = document.getElementById('playPauseBtn');
+            const volumeControl = document.getElementById('volumeControl');
+            if (playPauseBtn && volumeControl) {
+                playPauseBtn.addEventListener('click', () => {
+                    if (isPlaying) { audio.pause(); playPauseBtn.innerHTML = '<i class="fas fa-play"></i>'; }
+                    else { audio.play(); playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>'; }
+                    isPlaying = !isPlaying;
+                });
+                volumeControl.addEventListener('input', (e) => audio.volume = parseFloat(e.target.value));
+            }
+        })();
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

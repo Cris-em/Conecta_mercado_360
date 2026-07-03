@@ -1,0 +1,903 @@
+<!-- ======================================================================= -->
+<!-- ARCHIVO: comprador_inicio.html                                           -->
+<!-- DESCRIPCIÓN: Página principal de la tienda para compradores.             -->
+<!--              Muestra los locales del mercado y los productos             -->
+<!--              disponibles, permitiendo agregar al carrito.               -->
+<!-- ======================================================================= -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conecta Mercado 360 - Tienda para Compradores</title>
+    
+    <!-- Fuentes y librerías externas -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <style>
+        /* ==========================================================
+               ESTILOS GLOBALES Y RESET DE NAVEGADOR
+               ========================================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            /* Carga la imagen de fondo del ajolote */
+            background-image: url("{{ url_for('static', filename='imagenes/fondo_axolotl.png') }}");
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+            color: #2e1a30;
+            position: relative;
+        }
+
+        /* Capa de fondo blanco semitransparente para mejorar la legibilidad del texto */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            z-index: -1;
+        }
+
+        /* ==========================================================
+               BARRA DE NAVEGACIÓN (NAVBAR)
+               ========================================================== */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 5%;
+            background: rgba(86, 0, 158, 0.96); /* Morado intenso */
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 3px solid #FF1493; /* Línea rosa mexicano */
+            box-shadow: 0 4px 20px rgba(86, 0, 158, 0.2);
+        }
+
+        .logo a {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #f9f7e1;
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: #FFC400; /* Amarillo vibrante */
+        }
+
+        .nav-links a {
+            color: #ffffff;
+            text-decoration: none;
+            margin-left: 1.8rem;
+            font-weight: 500;
+            transition: 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #FFC400;
+        }
+
+        .nav-links i {
+            margin-right: 0.4rem;
+        }
+
+        /* ==========================================================
+               CONTENEDOR PRINCIPAL Y BARRA DE BÚSQUEDA
+               ========================================================== */
+        .container {
+            max-width: 1300px;
+            margin: 2rem auto;
+            padding: 0 5%;
+        }
+
+        .search-bar {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .search-bar input {
+            width: 70%;
+            padding: 1rem 1.5rem;
+            border: 2px solid transparent;
+            border-radius: 60px 0 0 60px;
+            font-size: 1rem;
+            outline: none;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: 0.3s;
+        }
+
+        .search-bar input:focus {
+            border-color: #FF1493;
+        }
+
+        .search-bar button {
+            background: #FF1493;
+            border: none;
+            padding: 0 1.8rem;
+            border-radius: 0 60px 60px 0;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .search-bar button:hover {
+            background: #FFC400;
+            color: #2e1a30;
+        }
+
+        /* ==========================================================
+               SECCIÓN Y TARJETAS DE LOCALES (PUESTOS DEL MERCADO)
+               ========================================================== */
+        .locals-section {
+            margin-bottom: 2.5rem;
+        }
+
+        .locals-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            justify-content: center;
+        }
+
+        .local-card {
+            background: white;
+            border-radius: 1.5rem;
+            width: 220px;
+            overflow: hidden;
+            box-shadow: 0 5px 12px rgba(86, 0, 158, 0.08);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .local-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px rgba(255, 20, 147, 0.15);
+        }
+
+        /* Clase activa para el local seleccionado */
+        .local-card.active {
+            border-color: #FF1493;
+            box-shadow: 0 0 0 4px rgba(255, 20, 147, 0.2);
+        }
+
+        .local-img {
+            width: 100%;
+            height: 130px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .local-info {
+            padding: 0.8rem;
+            text-align: center;
+        }
+
+        .local-info h4 {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #2e1a30;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .local-info h4:hover {
+            color: #FF1493;
+        }
+
+        .local-info p {
+            font-size: 0.75rem;
+            color: #6f6f6f;
+            margin-top: 0.2rem;
+        }
+
+        /* Botón para ver información detallada del local */
+        .btn-info-local {
+            margin-top: 0.8rem;
+            background: transparent;
+            border: 2px solid #4A0080;
+            color: #4A0080;
+            padding: 0.3rem 0.8rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .btn-info-local:hover {
+            background: #4A0080;
+            color: white;
+            transform: scale(1.02);
+        }
+
+        /* ==========================================================
+               SECCIÓN Y TARJETAS DE PRODUCTOS
+               ========================================================== */
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 1rem 0 1.5rem;
+            color: #4A0080;
+            border-left: 6px solid #FF1493;
+            padding-left: 1rem;
+        }
+
+        .products-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: center;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 1.5rem;
+            width: 260px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(86, 0, 158, 0.08);
+            transition: 0.3s ease;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .product-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 30px rgba(255, 20, 147, 0.15);
+            border-color: #FF1493;
+        }
+
+        .product-img {
+            height: 180px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5dc;
+        }
+
+        .product-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: 0.3s;
+        }
+
+        .product-card:hover .product-img img {
+            transform: scale(1.05);
+        }
+
+        .product-info {
+            padding: 1rem;
+        }
+
+        .product-info h4 {
+            font-size: 1.2rem;
+            margin-bottom: 0.3rem;
+            color: #2e1a30;
+        }
+
+        .product-info p {
+            color: #6f6f6f;
+            font-size: 0.85rem;
+            margin: 0.3rem 0;
+        }
+
+        /* Etiqueta que muestra a qué local pertenece el producto */
+        .product-info .local-name {
+            display: inline-block;
+            background: #F0E6F6;
+            color: #4A0080;
+            font-size: 0.75rem;
+            padding: 0.2rem 0.8rem;
+            border-radius: 40px;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .price {
+            font-weight: 700;
+            color: #FF1493;
+            font-size: 1.2rem;
+        }
+
+        /* Botón para agregar producto al carrito */
+        .btn-add {
+            display: block;
+            width: 100%;
+            background: #F0E6F6;
+            color: #4A0080;
+            border: none;
+            padding: 0.6rem;
+            border-radius: 40px;
+            font-weight: 600;
+            margin-top: 0.8rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-add:hover {
+            background: #FF1493;
+            color: white;
+        }
+
+        /* Clase para bloquear el botón si el usuario es invitado */
+        .btn-add.blocked {
+            background: #e0e0e0;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        /* ==========================================================
+               MODAL INFORMATIVO DE LOS LOCALES
+               ========================================================== */
+        .local-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .local-modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 2rem;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            border-top: 8px solid #FF1493;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .local-modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #888;
+            transition: 0.2s;
+        }
+
+        .local-modal-close:hover {
+            color: #FF1493;
+        }
+
+        .local-modal-img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .local-modal-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #4A0080;
+            margin-bottom: 0.5rem;
+        }
+
+        .local-modal-desc {
+            color: #555;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .btn-buy-from-local {
+            background: #FF1493;
+            color: white;
+            border: none;
+            padding: 0.6rem 1.5rem;
+            border-radius: 60px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        .btn-buy-from-local:hover {
+            background: #FFC400;
+            color: #2e1a30;
+            transform: scale(1.02);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ==========================================================
+               SECCIÓN DE HISTORIA DEL MERCADO
+               ========================================================== */
+        .history-section {
+            margin: 3rem 0 2rem;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 2rem;
+            border: 2px solid #FF1493;
+            backdrop-filter: blur(6px);
+            box-shadow: 0 8px 16px rgba(86, 0, 158, 0.1);
+        }
+
+        .history-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #4A0080;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .history-title i {
+            color: #FF1493;
+            margin-right: 10px;
+        }
+
+        .history-content {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .history-text {
+            flex: 2;
+            min-width: 280px;
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #2e1a30;
+        }
+
+        .history-image {
+            flex: 1;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .history-image i {
+            font-size: 8rem;
+            color: #FF1493;
+            opacity: 0.8;
+            text-shadow: 0 4px 8px rgba(255, 20, 147, 0.2);
+        }
+
+        /* ==========================================================
+               PIE DE PÁGINA (FOOTER)
+               ========================================================== */
+        footer {
+            background: #2a004a;
+            color: #FF1493;
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: 3rem;
+            border-top: 3px solid #FFC400;
+        }
+
+        footer a {
+            color: #FFC400;
+            text-decoration: none;
+        }
+
+        /* ==========================================================
+               ESTILOS RESPONSIVOS (MÓVILES Y TABLETS)
+               ========================================================== */
+        @media (max-width: 800px) {
+            .navbar {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            .nav-links a {
+                margin: 0 0.8rem;
+            }
+            .search-bar input {
+                width: 60%;
+            }
+            .local-card {
+                width: 160px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ==========================================================
+    BARRA DE NAVEGACIÓN SUPERIOR
+    ========================================================== -->
+    <div class="navbar">
+        <div class="logo"><a href="/">Conecta<span>Mercado360</span></a></div>
+        <div class="nav-links">
+            <a href="/"><i class="fas fa-home"></i> Inicio</a>
+            <a href="/comprador/inicio"><i class="fas fa-store"></i> Tienda</a>
+            <a href="/comprador/carrito"><i class="fas fa-shopping-cart"></i> Carrito</a>
+            <a href="/comprador/mapa"><i class="fas fa-map-marker-alt"></i> Mapa</a>
+            <a href="/usuario/perfil"><i class="fas fa-user"></i> Mi perfil</a>
+        </div>
+    </div>
+
+    <!-- ==========================================================
+    CONTENEDOR PRINCIPAL
+    ========================================================== -->
+    <div class="container">
+
+        <!-- Barra de búsqueda de productos -->
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Buscar productos, agricultores...">
+            <button id="searchBtn"><i class="fas fa-search"></i></button>
+        </div>
+
+        <!-- Sección de locales (Puestos del mercado) -->
+        <div class="locals-section">
+            <div class="section-title" style="font-size:1.5rem; margin-bottom:1rem;">Explora los locales del mercado</div>
+            <div class="locals-grid" id="localsGrid">
+                <!-- Los locales se generan dinámicamente con JavaScript -->
+            </div>
+        </div>
+
+        <!-- Título de la sección de productos -->
+        <div class="section-title" id="productSectionTitle">Todos los productos del mercado</div>
+        <div class="products-grid" id="productsGrid">
+            <!-- Los productos se generan dinámicamente con JavaScript -->
+        </div>
+
+        <!-- Sección de historia del mercado -->
+        <div class="history-section">
+            <div class="history-title"><i class="fas fa-store-alt"></i> Historia del Mercado Melchor Ocampo</div>
+            <div class="history-content">
+                <div class="history-text">
+                    <p><strong>Conecta Mercado 360</strong> nace con la misión de preservar la esencia del comercio tradicional mexicano.</p>
+                </div>
+                <div class="history-image"><i class="fas fa-axolotl"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================
+    MODAL DE INFORMACIÓN DEL LOCAL
+    ========================================================== -->
+    <div id="localInfoModal" class="local-modal-overlay">
+        <div class="local-modal-content">
+            <span class="local-modal-close" onclick="cerrarModalLocal()">&times;</span>
+            <img id="modalLocalImage" class="local-modal-img" src="" alt="Imagen del local">
+            <h3 id="modalLocalName" class="local-modal-title">Nombre del local</h3>
+            <p id="modalLocalDesc" class="local-modal-desc">Descripción del local.</p>
+            <button class="btn-buy-from-local" onclick="comprarDesdeLocal()">
+                <i class="fas fa-shopping-cart"></i> Comprar productos de este local
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================================
+    SCRIPTS Y LÓGICA DE NEGOCIO (JAVASCRIPT)
+    ========================================================== -->
+
+    <!-- Librería de animaciones AOS -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+    <script>
+        // Inicialización de las animaciones AOS
+        AOS.init({
+            once: true
+        });
+
+        // Variables globales que almacenan los datos obtenidos de la API
+        let locales = [];
+        let productos = [];
+        let currentLocal = "todos"; // Filtro activo por local
+        let searchTerm = ""; // Término de búsqueda activo
+        let userType = localStorage.getItem('userType'); // Obtiene el tipo de usuario ("guest" o "registered")
+        let tempLocalId = null; // ID del local temporal para el modal
+
+        /* ==========================================================
+           FUNCIÓN PRINCIPAL: CARGA DE DATOS DESDE LA API
+           ========================================================== */
+        async function cargarDatosDesdeDB() {
+            try {
+                const respuesta = await fetch('/api/datos_mercado');
+
+                if (!respuesta.ok) {
+                    throw new Error('El servidor respondió con el error ' + respuesta.status);
+                }
+
+                const datos = await respuesta.json();
+
+                if (datos.error) {
+                    throw new Error(datos.error);
+                }
+
+                // Se asignan los datos obtenidos a las variables globales
+                locales = datos.locales;
+                productos = datos.productos;
+
+                // Se dibujan los locales y los productos en pantalla
+                renderLocales();
+                renderProducts();
+
+            } catch (error) {
+                // En caso de error, se muestra un mensaje en la consola y en la interfaz
+                console.error("Error al conectar con la base de datos:", error);
+                document.getElementById("localsGrid").innerHTML = `
+                    <p style='width:100%; text-align:center; color:red; font-weight:bold;'>
+                        Error cargando locales: ${error.message}<br>
+                        Revisa que XAMPP esté encendido y mira la terminal de VS Code.
+                    </p>`;
+                document.getElementById("productsGrid").innerHTML = `
+                    <p style='text-align:center; width:100%; color: red; font-weight:bold;'>
+                        Error al cargar los productos: ${error.message}
+                    </p>`;
+            }
+        }
+
+        /* ==========================================================
+           FUNCIÓN PARA DIBUJAR LAS TARJETAS DE LOCALES
+           ========================================================== */
+        function renderLocales() {
+            const grid = document.getElementById("localsGrid");
+
+            if (!locales || locales.length === 0) {
+                grid.innerHTML = "<p style='width:100%; text-align:center; color:#999;'>Aún no hay locales registrados.</p>";
+                return;
+            }
+
+            grid.innerHTML = locales.map(l => {
+                // Si el local no tiene imagen, se muestra un marcador de posición
+                const imgSrc = l.imagen_local && l.imagen_local.trim() !== ''
+                    ? l.imagen_local
+                    : 'https://via.placeholder.com/220x130?text=Local+Sin+Foto';
+
+                const isActive = currentLocal === String(l.id) ? 'active' : '';
+
+                return `
+                    <div class="local-card ${isActive}">
+                        <img src="${imgSrc}" class="local-img" alt="${l.nombre}" loading="lazy">
+                        <div class="local-info">
+                            <h4 onclick="window.location.href='/local/${l.id}'">${l.nombre}</h4>
+                            <p>${l.descripcion || ''}</p>
+                            <a href="/local/${l.id}" class="btn-info-local">Ver información</a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        /* ==========================================================
+           FUNCIÓN PARA SELECCIONAR Y FILTRAR POR LOCAL
+           ========================================================== */
+        function seleccionarLocal(localId) {
+            currentLocal = String(localId);
+
+            // Actualiza la clase 'active' en las tarjetas de locales
+            document.querySelectorAll('.local-card').forEach(c => c.classList.remove('active'));
+            document.querySelector(`.local-card[data-local-id="${localId}"]`)?.classList.add('active');
+
+            // Vuelve a renderizar los productos filtrados
+            renderProducts();
+            actualizarTituloProductos();
+        }
+
+        // Actualiza el título de la sección de productos según el local seleccionado
+        function actualizarTituloProductos() {
+            const title = document.getElementById('productSectionTitle');
+            if (currentLocal !== 'todos') {
+                const local = locales.find(l => String(l.id) === currentLocal);
+                title.innerText = 'Productos de: ' + (local ? local.nombre : 'Local seleccionado');
+            } else {
+                title.innerText = 'Todos los productos del mercado';
+            }
+        }
+
+        /* ==========================================================
+           FUNCIONES PARA EL MODAL DE INFORMACIÓN DEL LOCAL
+           ========================================================== */
+        function abrirModalInfoLocal(localId) {
+            tempLocalId = localId;
+            const local = locales.find(l => l.id === localId);
+            if (!local) return;
+
+            document.getElementById('modalLocalImage').src = local.imagen_local || 'https://via.placeholder.com/450x180?text=Sin+Imagen';
+            document.getElementById('modalLocalName').innerText = local.nombre;
+            document.getElementById('modalLocalDesc').innerText = local.descripcion || 'Sin descripción disponible.';
+
+            document.getElementById('localInfoModal').style.display = 'flex';
+        }
+
+        function cerrarModalLocal() {
+            document.getElementById('localInfoModal').style.display = 'none';
+            tempLocalId = null;
+        }
+
+        function comprarDesdeLocal() {
+            if (tempLocalId) {
+                seleccionarLocal(tempLocalId);
+                document.getElementById('productSectionTitle').scrollIntoView({
+                    behavior: 'smooth'
+                });
+            }
+            cerrarModalLocal();
+        }
+
+        /* ==========================================================
+           FUNCIÓN PARA DIBUJAR LAS TARJETAS DE PRODUCTOS
+           ========================================================== */
+        function renderProducts() {
+            let filtered = productos;
+
+            // Filtrado por local
+            if (currentLocal !== "todos") {
+                filtered = filtered.filter(p => String(p.local_id) === String(currentLocal));
+            }
+
+            // Filtrado por texto de búsqueda
+            if (searchTerm.trim() !== "") {
+                filtered = filtered.filter(p => p.nombre.toLowerCase().includes(searchTerm.toLowerCase()));
+            }
+
+            const grid = document.getElementById("productsGrid");
+
+            if (filtered.length === 0) {
+                grid.innerHTML = "<p style='text-align:center; width:100%; color: #4A0080;'>No encontramos productos con esa búsqueda o filtro.</p>";
+                return;
+            }
+
+            grid.innerHTML = filtered.map(p => {
+                const localObj = locales.find(l => l.id === p.local_id);
+                const localNombre = localObj ? localObj.nombre : "Local desconocido";
+                const stock = parseFloat(p.stock) || 0;
+                const unidad = p.unidad || 'unidad';
+
+                // Verifica si hay imagen o usa un marcador de posición
+                const imgContent = (p.imagen_url && p.imagen_url.trim() !== '')
+                    ? `<img src="${p.imagen_url}" alt="${p.nombre}" loading="lazy">`
+                    : `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#f0f0f0; color:#bbb;"><i class="fas fa-image" style="font-size:4rem;"></i></div>`;
+
+                // Verifica si el usuario es invitado para bloquear el botón de compra
+                const isGuest = !userType || userType === 'guest';
+                const btnClass = isGuest ? 'btn-add blocked' : 'btn-add';
+                const btnClick = isGuest
+                    ? `event.preventDefault(); alert("Para comprar debes iniciar sesión como comprador. Haz clic en Inicio y elige Soy Comprador.");`
+                    : `agregarAlCarrito(${p.id}, this)`;
+
+                return `
+                    <div class="product-card" data-id="${p.id}">
+                        <div class="product-img">${imgContent}</div>
+                        <div class="product-info">
+                            <span class="local-name">${localNombre}</span>
+                            <h4>${p.nombre}</h4>
+                            <p>${p.descripcion}</p>
+                            <p style="color: #4A0080; font-weight: 500; font-size: 0.9rem;">Quedan: ${stock} ${unidad}</p>
+                            <p class="price">$${parseFloat(p.precio).toFixed(2)}/unidad</p>
+                            <button class="${btnClass}" data-id="${p.id}" onclick="${btnClick}"><i class="fas fa-cart-plus"></i> Agregar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Asigna eventos de clic a los botones de "Agregar" (solo si no están bloqueados)
+            document.querySelectorAll('.btn-add:not(.blocked)').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = parseInt(btn.dataset.id);
+                    agregarAlCarrito(id, btn);
+                });
+            });
+        }
+
+        /* ==========================================================
+           FUNCIÓN PARA AGREGAR UN PRODUCTO AL CARRITO (LOCALSTORAGE)
+           ========================================================== */
+        function agregarAlCarrito(productId, btnElement) {
+            const prod = productos.find(p => p.id === productId);
+            if (!prod) return;
+
+            // Validación de stock disponible
+            if (parseFloat(prod.stock) <= 0) {
+                alert("Este producto está agotado. No se puede agregar al carrito.");
+                return;
+            }
+
+            // Obtener el carrito actual del LocalStorage
+            let cart = JSON.parse(localStorage.getItem('compradorCart')) || [];
+            const existing = cart.find(item => item.id === prod.id);
+
+            if (existing) {
+                existing.cantidad++;
+            } else {
+                cart.push({
+                    id: prod.id,
+                    nombre: prod.nombre,
+                    precio: prod.precio,
+                    cantidad: 1,
+                    img: prod.imagen_url,
+                    descripcion: prod.descripcion
+                });
+            }
+
+            // Guardar el carrito actualizado en LocalStorage
+            localStorage.setItem('compradorCart', JSON.stringify(cart));
+
+            // Mostrar notificación de éxito
+            mostrarNotificacion(prod.nombre + ' agregado al carrito');
+        }
+
+        /* ==========================================================
+           FUNCIÓN PARA MOSTRAR NOTIFICACIONES TIPO TOAST
+           ========================================================== */
+        function mostrarNotificacion(mensaje) {
+            let toast = document.createElement('div');
+            toast.innerText = mensaje;
+            toast.style.position = 'fixed';
+            toast.style.bottom = '20px';
+            toast.style.right = '20px';
+            toast.style.backgroundColor = '#FF1493';
+            toast.style.color = 'white';
+            toast.style.padding = '12px 20px';
+            toast.style.borderRadius = '40px';
+            toast.style.fontWeight = '500';
+            toast.style.zIndex = '9999';
+            toast.style.boxShadow = '0 4px 12px rgba(255, 20, 147, 0.3)';
+            toast.style.fontFamily = 'Poppins, sans-serif';
+
+            document.body.appendChild(toast);
+
+            // Eliminar la notificación después de 2 segundos
+            setTimeout(() => {
+                toast.remove();
+            }, 2000);
+        }
+
+        /* ==========================================================
+           EVENTOS DE BÚSQUEDA
+           ========================================================== */
+        document.getElementById('searchBtn').addEventListener('click', () => {
+            searchTerm = document.getElementById('searchInput').value;
+            renderProducts();
+        });
+
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchTerm = e.target.value;
+                renderProducts();
+            }
+        });
+
+        /* ==========================================================
+           CARGA INICIAL AL ABRIR LA PÁGINA
+           ========================================================== */
+        cargarDatosDesdeDB();
+    </script>
+
+</body>
+</html>

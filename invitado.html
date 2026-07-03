@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modo Invitado - Conecta Mercado 360</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-image: url("/static/imagenes/fondo_axolotl.png");
+            background-size: cover; background-attachment: fixed; background-position: center;
+            color: #2e1a30; position: relative;
+        }
+        body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.85); z-index: -1; }
+        .navbar-guest { display: flex; justify-content: space-between; align-items: center; padding: 1rem 5%; background: rgba(86, 0, 158, 0.96); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 1000; border-bottom: 3px solid #FF1493; }
+        .logo-guest a { font-size: 1.6rem; font-weight: 800; color: #f9f7e1; text-decoration: none; }
+        .logo-guest span { color: #FFC400; }
+        .nav-links-guest a { color: #ffffff; text-decoration: none; margin-left: 1.8rem; font-weight: 500; transition: 0.3s; }
+        .nav-links-guest a:hover { color: #FFC400; }
+        .nav-links-guest i { margin-right: 0.4rem; }
+        .btn-login-prompt { background: #FF1493; color: white; border: none; padding: 0.6rem 1.5rem; border-radius: 40px; font-weight: 600; cursor: pointer; transition: 0.2s; text-decoration: none; }
+        .btn-login-prompt:hover { background: #FFC400; color: #2e1a30; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 5%; }
+        .guest-hero { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); border-radius: 2.5rem; padding: 3rem 2rem; text-align: center; margin-bottom: 2.5rem; border: 2px solid #FF1493; box-shadow: 0 10px 20px rgba(86, 0, 158, 0.1); }
+        .guest-hero h1 { font-size: 2.8rem; font-weight: 800; color: #4A0080; }
+        .guest-hero p { font-size: 1.1rem; color: #555; margin-top: 1rem; max-width: 700px; margin-left: auto; margin-right: auto; }
+        .guest-cta-box { background: #F0E6F6; border: 2px solid #FFC400; border-radius: 2rem; padding: 1.5rem; margin: -1rem auto 2.5rem auto; max-width: 750px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .guest-cta-box p { font-size: 1.1rem; font-weight: 600; color: #4A0080; margin-bottom: 1rem; }
+        .guest-cta-box .btn-register { display: inline-block; background: #FF1493; color: white; padding: 0.6rem 1.8rem; border-radius: 60px; text-decoration: none; font-weight: 600; transition: 0.2s; }
+        .guest-cta-box .btn-register:hover { background: #FFC400; color: #2e1a30; transform: scale(1.05); }
+        .section-title { font-size: 2rem; font-weight: 700; color: #4A0080; text-align: center; margin-bottom: 2rem; position: relative; }
+        .section-title:after { content: ''; display: block; width: 60px; height: 4px; background: #FF1493; margin: 10px auto 0; border-radius: 4px; }
+        .video-container { background: white; border-radius: 2rem; padding: 1.5rem; box-shadow: 0 10px 20px rgba(86, 0, 158, 0.08); margin-bottom: 3rem; border: 1px solid #FF1493; }
+        .video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 1rem; }
+        .video-wrapper video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 1rem; }
+        .map-container { background: white; border-radius: 2rem; padding: 1.5rem; box-shadow: 0 10px 20px rgba(86, 0, 158, 0.08); margin-bottom: 3rem; border: 1px solid #FF1493; }
+        #map { height: 400px; width: 100%; border-radius: 1rem; z-index: 1; }
+        .info-box-guest { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(8px); border-radius: 1.5rem; padding: 2rem; text-align: center; margin-top: 1rem; border: 1px solid #FFC400; }
+        @media (max-width: 800px) { .navbar-guest { flex-direction: column; gap: 1rem; } .nav-links-guest a { margin: 0 0.8rem; } .guest-hero h1 { font-size: 2rem; } .guest-cta-box p { font-size: 1rem; } }
+    </style>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+    <nav class="navbar-guest">
+        <div class="logo-guest"><a href="/invitado">Conecta<span>Mercado360</span></a></div>
+        <div class="nav-links-guest">
+            <a href="#info"><i class="fas fa-info-circle"></i> Información</a>
+            <a href="#manual"><i class="fas fa-video"></i> Manual</a>
+            <a href="#mapa"><i class="fas fa-map-marker-alt"></i> Ubicación</a>
+            <a href="/" class="btn-login-prompt"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</a>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="guest-hero" id="info">
+            <h1>🦎 Bienvenido al Modo Invitado</h1>
+            <p>Explora la información del <strong>Mercado Melchor Ocampo</strong>, conoce su historia y aprende a usar nuestra plataforma.</p>
+        </div>
+        <div class="guest-cta-box">
+            <p>💡 ¿Quieres comprar productos frescos? Para una experiencia completa, por favor <strong>regístrate o inicia sesión.</strong></p>
+            <a href="/" class="btn-register"><i class="fas fa-sign-in-alt"></i> Ir a Registrarme</a>
+        </div>
+        <div id="manual" class="section-title">📖 Manual de Usuario</div>
+        <div class="video-container">
+            <div class="video-wrapper">
+                <video controls controlsList="nodownload">
+                    <source src="{{ url_for('static', filename='videos/manual_usuario.mp4') }}" type="video/mp4">
+                    Tu navegador no soporta la reproducción de video.
+                </video>
+            </div>
+        </div>
+        <div class="info-box-guest">
+            <i class="fas fa-store-alt" style="font-size: 2.5rem; color: #FF1493; margin-bottom: 1rem; display: block;"></i>
+            <h3 style="color: #4A0080;">Tradición y Calidad</h3>
+            <p style="max-width: 700px; margin: 0 auto; line-height: 1.6;">El Mercado Melchor Ocampo es el corazón comercial de Chimalhuacán.</p>
+        </div>
+        <div id="mapa" class="section-title" style="margin-top: 3rem;">📍 Ubicación del Mercado</div>
+        <div class="map-container"><div id="map"></div></div>
+        <div class="info-box-guest">
+            <i class="fas fa-store" style="font-size: 1.5rem; color: #FF1493;"></i>
+            <p><strong>Mercado Melchor Ocampo</strong><br>Calle Benito Juárez, Chimalhuacán, Méx.</p>
+        </div>
+    </div>
+    <script>
+        const marketLat = 19.407194; const marketLng = -98.970341;
+        const marketAddress = "Mercado Melchor Ocampo, Calle Benito Juárez, Chimalhuacán, Méx.";
+        var map = L.map('map').setView([marketLat, marketLng], 16);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; CartoDB', subdomains: 'abcd', maxZoom: 19 }).addTo(map);
+        var marketIcon = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/252/252025.png', iconSize: [38, 38], iconAnchor: [19, 38], popupAnchor: [0, -30] });
+        var marker = L.marker([marketLat, marketLng], { icon: marketIcon }).addTo(map);
+        marker.bindPopup(`<b>🌽 Mercado Melchor Ocampo</b><br><a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(marketAddress)}" target="_blank" style="color: #FF1493; font-weight: bold;">📱 Cómo llegar</a>`).openPopup();
+    </script>
+</body>
+</html>
