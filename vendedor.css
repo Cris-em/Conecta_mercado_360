@@ -1,0 +1,32 @@
+/* Estilos para dashboards de vendedor */
+.dashboard-stats {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+.stat-card {
+    background: white;
+    border-radius: 28px;
+    padding: 1.5rem;
+    flex: 1;
+    text-align: center;
+    box-shadow: var(--sombra);
+}
+.stat-card h3 {
+    font-size: 2rem;
+    color: var(--naranja-calido);
+}
+
+.stock-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 24px;
+    overflow: hidden;
+}
+.stock-tabla th, .stock-tabla td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
